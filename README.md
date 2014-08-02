@@ -1,6 +1,6 @@
 # gitson
 
-A simple ocument store library for Git + JSON, based on [Aeson].
+A simple document store library for Git + JSON, based on [Aeson].
 Uses command line git, at least for now.
 No fancy indexes and stuff, but it does what I need right now.
 
