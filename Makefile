@@ -31,8 +31,5 @@ install:
 repl:
 	cabal repl lib:gitson
 
-run:
-	cabal run gitson
-
 test:
-	cabal test
+	cabal test tests
