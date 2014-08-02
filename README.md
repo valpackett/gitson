@@ -21,6 +21,8 @@ main = do
   saveToCollection "content/things" "first-thing" Thing {val = 1}
   first-thing <- readFromCollection "content/things" "first-thing" :: IO (Maybe Thing)
   -- first-thing == Just Thing {val = 1}
+  keys <- listCollection "content/things"
+  -- keys == Just ["first-thing"]
 ```
 
 ## Development

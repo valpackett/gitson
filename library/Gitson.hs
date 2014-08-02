@@ -60,3 +60,11 @@ readFromCollection collPath key = do
   case jsonString of
     Left e -> return Nothing
     Right val -> return $ decode val
+
+-- | Lists entry keys in a collection.
+listCollection :: FilePath -> IO (Maybe [String])
+listCollection collPath = do
+  contents <- try (getDirectoryContents collPath) :: IO (Either IOException [FilePath])
+  case contents of
+    Left e -> return Nothing
+    Right val -> return $ Just $ map dropExtension $ filter (`notElem` [".", ".."]) val
