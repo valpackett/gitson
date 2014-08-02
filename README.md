@@ -49,9 +49,6 @@ make repl
 
 # Generate documentation.
 make haddock
-
-# Analyze coverage.
-make hpc
 ```
 
 ## License

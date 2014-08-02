@@ -20,10 +20,6 @@ haddock:
 	cabal haddock --hyperlink-source
 	# dist/doc/html/gitson/index.html
 
-hpc:
-	hpc markup --destdir=tmp dist/hpc/tix/tests/tests.tix
-	# tmp/hpc_index.html
-
 install:
 	cabal sandbox init
 	cabal install --enable-benchmarks --enable-tests --only-dependencies --reorder-goals
