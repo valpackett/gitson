@@ -2,7 +2,7 @@
 module Gitson.Util (module Gitson.Util) where
 
 import           Data.Char (isSpace)
-import           Control.Monad (void)
+import           Control.Monad (void, liftM)
 import           System.FilePath
 import           System.Directory
 import           System.Process (readProcess)
@@ -32,7 +32,7 @@ stripWhitespaceRight = reverse . dropWhile isSpace . reverse
 
 -- | Finds the path to the git repository a given path belongs to.
 findRepoRoot :: FilePath -> IO FilePath
-findRepoRoot path = (insideDirectory path $ readProcess "git" ["rev-parse", "--show-toplevel"] []) >>= return . stripWhitespaceRight
+findRepoRoot path = liftM stripWhitespaceRight $ insideDirectory path $ readProcess "git" ["rev-parse", "--show-toplevel"] []
 
 -- | Returns the message of the last git commit in the repo where the current directory is located.
 lastCommitText :: IO String
@@ -44,4 +44,4 @@ shell cmd args = void $ rawSystem cmd args
 
 -- | Returns a lock file path.
 lockPath :: FilePath -> IO FilePath
-lockPath path = findRepoRoot path >>= return . (</> ".git" </> "gitson-lock") -- i can haz readability
+lockPath path = liftM (</> ".git" </> "gitson-lock") $ findRepoRoot path
