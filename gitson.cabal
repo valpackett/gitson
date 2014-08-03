@@ -23,6 +23,7 @@ library
       , bytestring
       , directory
       , filepath
+      , flock
       , aeson
     default-language: Haskell2010
     exposed-modules:

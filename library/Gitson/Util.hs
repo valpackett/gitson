@@ -41,3 +41,7 @@ lastCommitText = readProcess "git" ["log", "--max-count=1", "--pretty=format:%s"
 -- | Runs a shell command.
 shell :: String -> [String] -> IO ()
 shell cmd args = void $ rawSystem cmd args
+
+-- | Returns a lock file path.
+lockPath :: FilePath -> IO FilePath
+lockPath path = findRepoRoot path >>= return . (</> ".git" </> "gitson-lock") -- i can haz readability
