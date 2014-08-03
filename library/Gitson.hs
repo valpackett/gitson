@@ -1,42 +1,21 @@
-{-# OPTIONS_GHC -fno-warn-dodgy-exports -fno-warn-unused-imports #-}
+{-# OPTIONS_GHC -fno-warn-dodgy-exports -fwarn-unused-imports #-}
 
 -- | Gitson is a simple document store library for Git + JSON.
 module Gitson (module Gitson) where
 
 import           Prelude hiding (catch)
-import           System.FilePath
 import           System.Directory
-import           System.Cmd (rawSystem)
-import           System.Process (readProcess)
-import           System.IO.Error hiding (catch)
+import           System.FilePath
 import           Control.Exception
-import           Data.Char (isSpace)
 import           Data.Aeson (ToJSON, encode, FromJSON, decode)
 import qualified Data.ByteString.Lazy as BL
-
-makePath :: FilePath -> String -> FilePath
-makePath collPath key = collPath </> key <.> "json"
-
-insideDirectory :: FilePath -> IO a -> IO a
-insideDirectory path action = do
-  prevPath <- getCurrentDirectory
-  setCurrentDirectory path
-  result <- action
-  setCurrentDirectory prevPath
-  return result
-
-stripWhitespaceRight :: FilePath -> FilePath
-stripWhitespaceRight = reverse . dropWhile isSpace . reverse
-
-findRepoRoot :: FilePath -> IO FilePath
-findRepoRoot path = (insideDirectory path $ readProcess "git" ["rev-parse", "--show-toplevel"] []) >>= return . stripWhitespaceRight
+import           Gitson.Util
 
 -- | Creates a git repository under a given path.
 createRepo :: FilePath -> IO ()
 createRepo path = do
   createDirectoryIfMissing True path
-  _ <- rawSystem "git" ["init", path]
-  return ()
+  shell "git" ["init", path]
 
 -- | Writes an entry to a collection under a given key and commits the change to git.
 saveToCollection :: ToJSON a => FilePath -> String -> a -> IO ()
@@ -49,8 +28,8 @@ saveToCollection collPath key content = do
   insideDirectory repoRoot $ do
     let collName = makeRelative repoRelPath collPath
     let fileName = makeRelative repoRelPath filePath
-    _ <- rawSystem "git" ["add", fileName]
-    _ <- rawSystem "git" ["commit", "-m", "Update '" ++ key ++ "' in collection '" ++ collName ++ "'"]
+    shell "git" ["add", fileName]
+    shell "git" ["commit", "-m", "Update '" ++ key ++ "' in collection '" ++ collName ++ "'"]
     return ()
 
 -- | Reads an entry from a collection by key.
@@ -67,4 +46,4 @@ listCollection collPath = do
   contents <- try (getDirectoryContents collPath) :: IO (Either IOException [FilePath])
   case contents of
     Left e -> return Nothing
-    Right val -> return $ Just $ map dropExtension $ filter (`notElem` [".", ".."]) val
+    Right val -> return $ Just $ filterFilenamesAsKeys val

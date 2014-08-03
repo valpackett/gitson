@@ -18,7 +18,7 @@ configure:
 
 haddock:
 	cabal haddock --hyperlink-source
-	# dist/doc/html/gitson/index.html
+	open dist/doc/html/gitson/index.html
 
 install:
 	cabal sandbox init

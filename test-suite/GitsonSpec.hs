@@ -4,25 +4,21 @@ module GitsonSpec (spec) where
 
 import           Test.Hspec
 import           System.Directory
-import           System.Process (readProcess)
 import           Data.Aeson.TH
 import           Gitson
+import           Gitson.Util (insideDirectory, lastCommitText)
 
 data Thing = Thing { val :: Int } deriving (Eq, Show)
 $(deriveJSON defaultOptions ''Thing)
 
 spec :: Spec
 spec = before setup $ after cleanup $ describe "gitson" $ do
-  it "forms paths" $ do
-    makePath "things" "entry" `shouldBe` "things/entry.json"
-    makePath "things/" "entry" `shouldBe` "things/entry.json"
-
   it "saves entries" $ do
     saveToCollection "tmp/repo/things" "first-thing" Thing {val = 1}
     stored <- readFile "tmp/repo/things/first-thing.json"
     stored `shouldBe` "{\"val\":1}"
     insideDirectory "tmp/repo" $ do
-      commitMsg <- readProcess "git" ["log", "--max-count=1", "--pretty=format:%s"] []
+      commitMsg <- lastCommitText
       commitMsg `shouldBe` "Update 'first-thing' in collection 'things'"
 
   it "reads entries" $ do
