@@ -1,4 +1,4 @@
-# gitson
+# gitson [![Build Status](https://travis-ci.org/myfreeweb/gitson.svg?branch=master)](https://travis-ci.org/myfreeweb/gitson)
 
 A simple document store library for Git + JSON, based on [Aeson].
 Uses command line git, at least for now.
