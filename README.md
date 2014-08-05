@@ -12,7 +12,7 @@ Transactions use [flock], so it's safe even across completely separate programs!
 
 ```haskell
 import Gitson
-import Gitson.Util
+import Gitson.Util (insideDirectory)
 import Data.Aeson.TH
 import Control.Monad.IO.Class (liftIO)
 
@@ -21,16 +21,34 @@ $(deriveJSON defaultOptions ''Thing)
 
 main :: IO ()
 main = do
-  createRepo "./content" -- git init
+  -- Creating a new "database," basically mkdir + git init
+  createRepo "./content"
+
+  -- Writing data to a "database" happens in transactions
+  -- A transaction is committed after the block is executed
+  -- Just like in SQL databases
   transaction "./content" $ do
+    -- order: (data)          (key)         (collection)
     saveEntry Thing {val = 1} "first-thing" "content"
+    -- Collections are created automatically, like in MongoDB
     liftIO $ putStrLn "Written first-thing"
-    -- This `do` block is not the raw IO monad, it's a WriterT, so we have to use liftIO to do IO actions inside of it!
-  -- *After the block ends*, the files are written, committed to git and the lock is released.
-  first-thing <- readEntry "first-thing" "./content/things" :: IO (Maybe Thing)
-  -- first-thing == Just Thing {val = 1}
+    -- You have to use liftIO to do IO actions inside of a transaction!
+    -- Because a transaction is a monad transformer, WriterT actually
+
+  -- Reading data
+  -- (These are normal IO actions, so if you want
+  --  to read inside of a transaction, liftIO)
   keys <- listEntries "./content/things"
-  -- keys == Just ["first-thing"]
+       -- Just ["first-thing"]
+  first-thing <- readEntry "first-thing" "./content/things" :: IO (Maybe Thing)
+              -- Just Thing {val = 1}
+
+  -- Reading data, avoiding repetition of the repo path
+  insideDirectory "./content" $ do
+    keys <- listEntries "/things"
+         -- Just ["first-thing"]
+    first-thing <- readEntry "first-thing" "/things" :: IO (Maybe Thing)
+         -- Just Thing {val = 1}
 ```
 
 ## Development
