@@ -5,6 +5,7 @@ module GitsonSpec (spec) where
 import           Test.Hspec
 import           System.Directory
 import           Data.Aeson.TH
+import           Control.Monad.IO.Class
 import           Gitson
 import           Gitson.Util (insideDirectory, lastCommitText)
 
@@ -13,33 +14,39 @@ $(deriveJSON defaultOptions ''Thing)
 
 spec :: Spec
 spec = before setup $ after cleanup $ describe "gitson" $ do
-  it "saves entries" $ do
-    saveToCollection "tmp/repo/things" "first-thing" Thing {val = 1}
-    stored <- readFile "tmp/repo/things/first-thing.json"
-    stored `shouldBe` "{\"val\":1}"
+  it "saves entries in transactions" $ do
+    transaction "tmp/repo" $ do
+      saveEntry Thing {val = 1} "first-thing" "things"
+      saveEntry Thing {val = 2} "second-thing" "things"
+      liftIO $ (readFile "tmp/repo/things/first-thing.json") `shouldThrow` anyIOException
+      liftIO $ (readFile "tmp/repo/things/second-thing.json") `shouldThrow` anyIOException
     insideDirectory "tmp/repo" $ do
+      first <- readFile "things/first-thing.json"
+      first `shouldBe` "{\"val\":1}"
+      second <- readFile "things/second-thing.json"
+      second `shouldBe` "{\"val\":2}"
       commitMsg <- lastCommitText
-      commitMsg `shouldBe` "Update 'first-thing' in collection 'things'"
+      commitMsg `shouldBe` "Gitson transaction"
 
   it "reads entries" $ do
     createDirectoryIfMissing True "tmp/repo/things"
     _ <- writeFile "tmp/repo/things/second-thing.json" "{\"val\":2}"
-    content <- readFromCollection "tmp/repo/things" "second-thing" :: IO (Maybe Thing)
+    content <- readEntry "second-thing" "tmp/repo/things" :: IO (Maybe Thing)
     content `shouldBe` Just Thing {val = 2}
 
   it "returns Nothing when reading by a nonexistent key" $ do
-    content <- readFromCollection "tmp/repo/things" "totally-not-a-thing" :: IO (Maybe Thing)
+    content <- readEntry "totally-not-a-thing" "tmp/repo/things" :: IO (Maybe Thing)
     content `shouldBe` Nothing
 
   it "lists entries" $ do
     createDirectoryIfMissing True "tmp/repo/things"
     _ <- writeFile "tmp/repo/things/first-thing.json" "{}"
     _ <- writeFile "tmp/repo/things/second-thing.json" "{}"
-    list <- listCollection "tmp/repo/things"
+    list <- listEntries "tmp/repo/things"
     list `shouldBe` Just ["first-thing", "second-thing"]
 
   it "returns Nothing when listing a nonexistent collection" $ do
-    list <- listCollection "nonsense"
+    list <- listEntries "nonsense"
     list `shouldBe` Nothing
 
 setup :: IO ()

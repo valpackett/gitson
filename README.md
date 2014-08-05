@@ -3,25 +3,33 @@
 A simple document store library for Git + JSON, based on [Aeson].
 Uses command line git, at least for now.
 No fancy indexes and stuff, but it does what I need right now.
+Transactions use [flock], so it's safe even across completely separate programs!
 
 [Aeson]: http://hackage.haskell.org/package/aeson
+[flock]: http://hackage.haskell.org/package/flock
 
 ## Usage
 
 ```haskell
 import Gitson
+import Gitson.Util
 import Data.Aeson.TH
+import Control.Monad.IO.Class (liftIO)
 
 data Thing = Thing { val :: Int } deriving (Eq, Show)
 $(deriveJSON defaultOptions ''Thing)
 
 main :: IO ()
 main = do
-  createRepo "content"
-  saveToCollection "content/things" "first-thing" Thing {val = 1}
-  first-thing <- readFromCollection "content/things" "first-thing" :: IO (Maybe Thing)
+  createRepo "./content" -- git init
+  transaction "./content" $ do
+    saveEntry Thing {val = 1} "first-thing" "content"
+    liftIO $ putStrLn "Written first-thing"
+    -- This `do` block is not the raw IO monad, it's a WriterT, so we have to use liftIO to do IO actions inside of it!
+  -- *After the block ends*, the files are written, committed to git and the lock is released.
+  first-thing <- readEntry "first-thing" "./content/things" :: IO (Maybe Thing)
   -- first-thing == Just Thing {val = 1}
-  keys <- listCollection "content/things"
+  keys <- listEntries "./content/things"
   -- keys == Just ["first-thing"]
 ```
 

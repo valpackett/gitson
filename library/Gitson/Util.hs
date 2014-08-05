@@ -11,7 +11,7 @@ import           System.Cmd (rawSystem)
 
 -- | Combines two paths and adds the .json extension.
 entryPath :: FilePath -> String -> FilePath
-entryPath collPath key = collPath </> key <.> "json"
+entryPath collection key = collection </> key <.> "json"
 
 -- | Turns a list of filenames into a list of keys.
 filterFilenamesAsKeys :: [String] -> [String]

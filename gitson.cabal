@@ -19,6 +19,7 @@ tested-with:
 library
     build-depends:
         base
+      , transformers
       , process
       , bytestring
       , directory
@@ -38,6 +39,7 @@ test-suite tests
     build-depends:
         base
       , gitson
+      , transformers
       , process
       , directory
       , aeson
