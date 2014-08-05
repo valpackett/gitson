@@ -21,8 +21,8 @@ spec = before setup $ after cleanup $ do
       transaction "tmp/repo" $ do
         saveEntry "things" "first-thing" Thing {val = 1}
         saveEntry "things" "second-thing" Thing {val = 2}
-        liftIO $ (readFile "tmp/repo/things/first-thing.json") `shouldThrow` anyIOException
-        liftIO $ (readFile "tmp/repo/things/second-thing.json") `shouldThrow` anyIOException
+        liftIO $ (readFile "things/first-thing.json") `shouldThrow` anyIOException
+        liftIO $ (readFile "things/second-thing.json") `shouldThrow` anyIOException
       insideDirectory "tmp/repo" $ do
         first <- readFile "things/first-thing.json"
         first `shouldBe` "{\"val\":1}"
