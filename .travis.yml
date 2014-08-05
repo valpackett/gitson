@@ -2,3 +2,8 @@ language: haskell
 ghc:
   - 7.8
   - 7.6
+install:
+  - make install
+script:
+  - make bench
+  - make test

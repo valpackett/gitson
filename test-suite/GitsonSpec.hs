@@ -7,10 +7,11 @@ import           System.Directory
 import           Data.Aeson.TH
 import           Data.List (sort)
 import           Control.Applicative
+import           Control.Exception
 import           Control.Monad.IO.Class
+import           Control.Monad (void)
 import           Gitson
 import           Gitson.Util (insideDirectory, lastCommitText)
-import           System.Process
 
 data Thing = Thing { val :: Int } deriving (Eq, Show)
 $(deriveJSON defaultOptions ''Thing)
@@ -25,10 +26,6 @@ spec = before setup $ after cleanup $ do
         liftIO $ (readFile "things/first-thing.json") `shouldThrow` anyIOException
         liftIO $ (readFile "things/second-thing.json") `shouldThrow` anyIOException
       insideDirectory "tmp/repo" $ do
-        ls <- readProcess "ls" ["-la"] []
-        putStrLn ls
-        lsTh <- readProcess "ls" ["-la", "things"] []
-        putStrLn lsTh
         first <- readFile "things/first-thing.json"
         first `shouldBe` "{\"val\":1}"
         second <- readFile "things/second-thing.json"
@@ -63,4 +60,4 @@ setup :: IO ()
 setup = createRepo "tmp/repo"
 
 cleanup :: IO ()
-cleanup = removeDirectoryRecursive "tmp/repo"
+cleanup = void (try (removeDirectoryRecursive "tmp/repo") :: IO (Either IOException ()))
