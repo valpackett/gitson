@@ -1,9 +1,7 @@
 -- | Various functions used inside Gitson.
 module Gitson.Util (module Gitson.Util) where
 
-import           Data.Char (isSpace)
 import           Control.Monad (void)
-import           Control.Applicative
 import           System.FilePath
 import           System.Directory
 import           System.Process
@@ -39,17 +37,6 @@ insideDirectory path action = do
   result <- action
   setCurrentDirectory prevPath
   return result
-
--- | Removes trailing whitespace like the newline you get from executing commands.
---
--- >>> stripWhitespaceRight "/path/to/thingy \n\n\n"
--- "/path/to/thingy"
-stripWhitespaceRight :: FilePath -> FilePath
-stripWhitespaceRight = reverse . dropWhile isSpace . reverse
-
--- | Finds the path to the git repository a given path belongs to.
-findRepoRoot :: FilePath -> IO FilePath
-findRepoRoot path = stripWhitespaceRight <$> (insideDirectory path $ readProcess "git" ["rev-parse", "--show-toplevel"] [])
 
 -- | Returns the message of the last git commit in the repo where the current directory is located.
 lastCommitText :: IO String
