@@ -62,6 +62,6 @@ devNull = openFile "/dev/null" ReadWriteMode
 -- | Runs a shell command with stdin, stdout and stderr set to /dev/null.
 shell :: String -> [String] -> IO ()
 shell cmd args = void $ do
-  null <- devNull
-  (_, _, _, pid) <- createProcess (proc cmd args){std_in = UseHandle null, std_out = UseHandle null, std_err = UseHandle null}
+  dnull <- devNull
+  (_, _, _, pid) <- createProcess (proc cmd args){std_in = UseHandle dnull, std_out = UseHandle dnull, std_err = UseHandle dnull}
   waitForProcess pid

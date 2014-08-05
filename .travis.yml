@@ -12,4 +12,4 @@ script:
   - make test
 after_script:
   - cabal install hpc-coveralls
-  - .cabal-sandbox/bin/hpc-coveralls --exclude-dir=test tests examples
+  - .cabal-sandbox/bin/hpc-coveralls tests examples

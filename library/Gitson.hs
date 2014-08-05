@@ -1,9 +1,7 @@
 -- | Gitson is a simple document store library for Git + JSON.
 module Gitson (module Gitson) where
 
-import           Prelude hiding (catch)
 import           System.Directory
-import           System.FilePath
 import           System.Lock.FLock
 import           Control.Exception
 import           Control.Applicative
