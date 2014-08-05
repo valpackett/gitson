@@ -19,11 +19,15 @@ spec = before setup $ after cleanup $ do
   describe "transaction" $ do
     it "saves entries only after it's done" $ do
       transaction "tmp/repo" $ do
+        liftIO $ putStrLn "inside transaction!"
         saveEntry "things" "first-thing" Thing {val = 1}
         saveEntry "things" "second-thing" Thing {val = 2}
+        liftIO $ putStrLn "inside transaction after saves!"
         liftIO $ (readFile "things/first-thing.json") `shouldThrow` anyIOException
         liftIO $ (readFile "things/second-thing.json") `shouldThrow` anyIOException
+      putStrLn "transaction done!"
       insideDirectory "tmp/repo" $ do
+        putStrLn "inside reading!"
         first <- readFile "things/first-thing.json"
         first `shouldBe` "{\"val\":1}"
         second <- readFile "things/second-thing.json"
