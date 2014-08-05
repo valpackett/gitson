@@ -25,8 +25,8 @@ createRepo path = do
 type TransactionWriter = WriterT [IO ()] IO ()
 
 -- | Adds a write action to a transaction.
-saveEntry :: ToJSON a => a -> FilePath -> FilePath -> TransactionWriter
-saveEntry content key collection = do
+saveEntry :: ToJSON a => FilePath -> FilePath -> a -> TransactionWriter
+saveEntry collection key content = do
   liftIO $ createDirectoryIfMissing True collection
   tell [BL.writeFile (entryPath collection key) (encode content)]
 
@@ -42,7 +42,7 @@ transaction repoPath action = do
 
 -- | Reads an entry from a collection by key.
 readEntry :: FromJSON a => FilePath -> FilePath -> IO (Maybe a)
-readEntry key collection = do
+readEntry collection key = do
   jsonString <- try (BL.readFile $ entryPath collection key) :: IO (Either IOException BL.ByteString)
   return $ decode =<< hush jsonString
 

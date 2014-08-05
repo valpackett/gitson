@@ -19,8 +19,8 @@ spec = before setup $ after cleanup $ do
   describe "transaction" $ do
     it "saves entries only after it's done" $ do
       transaction "tmp/repo" $ do
-        saveEntry Thing {val = 1} "first-thing" "things"
-        saveEntry Thing {val = 2} "second-thing" "things"
+        saveEntry "things" "first-thing" Thing {val = 1}
+        saveEntry "things" "second-thing" Thing {val = 2}
         liftIO $ (readFile "tmp/repo/things/first-thing.json") `shouldThrow` anyIOException
         liftIO $ (readFile "tmp/repo/things/second-thing.json") `shouldThrow` anyIOException
       insideDirectory "tmp/repo" $ do
@@ -35,11 +35,11 @@ spec = before setup $ after cleanup $ do
     it "returns Just the entry when reading an entry by key" $ do
       createDirectoryIfMissing True "tmp/repo/things"
       _ <- writeFile "tmp/repo/things/second-thing.json" "{\"val\":2}"
-      content <- readEntry "second-thing" "tmp/repo/things" :: IO (Maybe Thing)
+      content <- readEntry "tmp/repo/things" "second-thing" :: IO (Maybe Thing)
       content `shouldBe` Just Thing {val = 2}
 
     it "returns Nothing when reading by a nonexistent key" $ do
-      content <- readEntry "totally-not-a-thing" "tmp/repo/things" :: IO (Maybe Thing)
+      content <- readEntry "tmp/repo/things" "totally-not-a-thing" :: IO (Maybe Thing)
       content `shouldBe` Nothing
 
   describe "listEntries" $ do

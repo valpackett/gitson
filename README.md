@@ -28,8 +28,8 @@ main = do
   -- A transaction is committed after the block is executed
   -- Just like in SQL databases
   transaction "./content" $ do
-    -- order: (data)          (key)         (collection)
-    saveEntry Thing {val = 1} "first-thing" "content"
+    -- order: (collection) (key        ) (data)
+    saveEntry "content"    "first-thing" Thing {val = 1}
     -- Collections are created automatically, like in MongoDB
     liftIO $ putStrLn "Written first-thing"
     -- You have to use liftIO to do IO actions inside of a transaction!
@@ -40,14 +40,14 @@ main = do
   --  to read inside of a transaction, liftIO)
   keys <- listEntries "./content/things"
        -- Just ["first-thing"]
-  first-thing <- readEntry "first-thing" "./content/things" :: IO (Maybe Thing)
+  first-thing <- readEntry "./content/things" "first-thing" :: IO (Maybe Thing)
               -- Just Thing {val = 1}
 
   -- Reading data, avoiding repetition of the repo path
   insideDirectory "./content" $ do
-    keys <- listEntries "/things"
+    keys <- listEntries "things"
          -- Just ["first-thing"]
-    first-thing <- readEntry "first-thing" "/things" :: IO (Maybe Thing)
+    first-thing <- readEntry "things" "first-thing" :: IO (Maybe Thing)
          -- Just Thing {val = 1}
 ```
 
