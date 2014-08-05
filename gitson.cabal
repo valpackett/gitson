@@ -79,7 +79,11 @@ test-suite documentation
 benchmark benchmarks
     build-depends:
         base
+      , directory
+      , transformers
+      , random
       , gitson
+      , aeson
       , criterion == 0.6.*
         , hastache < 0.6
         , statistics < 0.11

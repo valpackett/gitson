@@ -6,8 +6,8 @@ import           Control.Monad (void)
 import           Control.Applicative
 import           System.FilePath
 import           System.Directory
-import           System.Process (readProcess)
-import           System.Cmd (rawSystem)
+import           System.Process
+import           System.IO
 
 -- | Combines two paths and adds the .json extension.
 entryPath :: FilePath -> String -> FilePath
@@ -39,9 +39,16 @@ findRepoRoot path = stripWhitespaceRight <$> (insideDirectory path $ readProcess
 lastCommitText :: IO String
 lastCommitText = readProcess "git" ["log", "--max-count=1", "--pretty=format:%s"] []
 
--- | Runs a shell command.
+-- | A /dev/null handle.
+devNull :: IO Handle
+devNull = openFile "/dev/null" ReadWriteMode
+
+-- | Runs a shell command with stdin, stdout and stderr set to /dev/null.
 shell :: String -> [String] -> IO ()
-shell cmd args = void $ rawSystem cmd args
+shell cmd args = void $ do
+  null <- devNull
+  (_, _, _, pid) <- createProcess (proc cmd args){std_in = UseHandle null, std_out = UseHandle null, std_err = UseHandle null}
+  waitForProcess pid
 
 -- | Returns a lock file path.
 lockPath :: FilePath -> IO FilePath
