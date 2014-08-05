@@ -1,4 +1,4 @@
-# gitson [![Hackage](https://img.shields.io/hackage/v/gitson.svg?style=flat)](http://hackage.haskell.org/package/gitson) [![Build Status](https://img.shields.io/travis/joyent/node.svg?style=flat)](https://travis-ci.org/myfreeweb/gitson) [![Coverage Status](https://img.shields.io/coveralls/myfreeweb/gitson.svg?style=flat)](https://coveralls.io/r/myfreeweb/gitson) [![Apache License 2.0](https://img.shields.io/badge/license-Apache%202.0-brightgreen.svg?style=flat)](https://www.tldrlegal.com/l/apache2)
+# gitson [![Hackage](https://img.shields.io/hackage/v/gitson.svg?style=flat)](http://hackage.haskell.org/package/gitson) [![Build Status](https://img.shields.io/travis/myfreeweb/gitson.svg?style=flat)](https://travis-ci.org/myfreeweb/gitson) [![Coverage Status](https://img.shields.io/coveralls/myfreeweb/gitson.svg?style=flat)](https://coveralls.io/r/myfreeweb/gitson) [![Apache License 2.0](https://img.shields.io/badge/license-Apache%202.0-brightgreen.svg?style=flat)](https://www.tldrlegal.com/l/apache2)
 
 A simple document store library for Git + JSON, based on [Aeson].
 Uses command line git, at least for now.
