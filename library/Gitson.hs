@@ -18,14 +18,14 @@ import           Gitson.Util
 createRepo :: FilePath -> IO ()
 createRepo path = do
   createDirectoryIfMissing True path
-  shell "git" ["init", path]
-  lock <- lockPath path
-  writeFile lock ""
+  insideDirectory path $ do
+    shell "git" ["init"]
+    writeFile lockPath ""
 
 type TransactionWriter = WriterT [IO ()] IO ()
 
 -- | Adds a write action to a transaction.
-saveEntry :: ToJSON a => a -> FilePath -> String -> TransactionWriter
+saveEntry :: ToJSON a => a -> FilePath -> FilePath -> TransactionWriter
 saveEntry content key collection = do
   liftIO $ createDirectoryIfMissing True collection
   tell [BL.writeFile (entryPath collection key) (encode content)]
@@ -33,23 +33,21 @@ saveEntry content key collection = do
 -- | Executes a blocking transaction on a repository, committing the results to git.
 transaction :: FilePath -> TransactionWriter -> IO ()
 transaction repoPath action = do
-  lock <- lockPath repoPath
-  withLock lock Exclusive Block $ do
-    insideDirectory repoPath $ do
-      shell "git" ["reset", "--hard", "HEAD"] -- Reset working tree just in case
-      writeActions <- execWriterT action
-      sequence_ writeActions
-      shell "git" ["add", "--all"]
-      shell "git" ["commit", "-m", "Gitson transaction"]
+  insideDirectory repoPath $ withLock lockPath Exclusive Block $ do
+    shell "git" ["reset", "--hard", "HEAD"] -- Reset working tree just in case
+    writeActions <- execWriterT action
+    sequence_ writeActions
+    shell "git" ["add", "--all"]
+    shell "git" ["commit", "-m", "Gitson transaction"]
 
 -- | Reads an entry from a collection by key.
-readEntry :: FromJSON a => FilePath -> String -> IO (Maybe a)
+readEntry :: FromJSON a => FilePath -> FilePath -> IO (Maybe a)
 readEntry key collection = do
   jsonString <- try (BL.readFile $ entryPath collection key) :: IO (Either IOException BL.ByteString)
   return $ decode =<< hush jsonString
 
 -- | Lists entry keys in a collection.
-listEntries :: FilePath -> IO (Maybe [String])
+listEntries :: FilePath -> IO (Maybe [FilePath])
 listEntries collection = do
   contents <- try (getDirectoryContents collection) :: IO (Either IOException [FilePath])
   return $ filterFilenamesAsKeys <$> hush contents

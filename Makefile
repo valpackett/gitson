@@ -28,4 +28,4 @@ repl:
 	cabal repl lib:gitson
 
 test:
-	cabal test tests
+	cabal test examples tests --show-details=always

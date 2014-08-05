@@ -10,10 +10,20 @@ import           System.Process
 import           System.IO
 
 -- | Combines two paths and adds the .json extension.
-entryPath :: FilePath -> String -> FilePath
+-- >>> entryPath "things" "entry"
+-- "things/entry.json"
+-- >>> entryPath "things/" "entry"
+-- "things/entry.json"
+entryPath :: FilePath -> FilePath -> FilePath
 entryPath collection key = collection </> key <.> "json"
 
+-- | Path to the transaction lock file, relative to the repo root.
+lockPath :: FilePath
+lockPath = ".git" </> "gitson-lock"
+
 -- | Turns a list of filenames into a list of keys.
+-- >>> filterFilenamesAsKeys [".", "..", "k1.json"]
+-- ["k1"]
 filterFilenamesAsKeys :: [String] -> [String]
 filterFilenamesAsKeys = map dropExtension . filter (`notElem` [".", ".."])
 
@@ -28,6 +38,8 @@ insideDirectory path action = do
   return result
 
 -- | Removes trailing whitespace like the newline you get from executing commands.
+-- >>> stripWhitespaceRight "/path/to/thingy \n\n\n"
+-- "/path/to/thingy"
 stripWhitespaceRight :: FilePath -> FilePath
 stripWhitespaceRight = reverse . dropWhile isSpace . reverse
 
@@ -49,7 +61,3 @@ shell cmd args = void $ do
   null <- devNull
   (_, _, _, pid) <- createProcess (proc cmd args){std_in = UseHandle null, std_out = UseHandle null, std_err = UseHandle null}
   waitForProcess pid
-
--- | Returns a lock file path.
-lockPath :: FilePath -> IO FilePath
-lockPath path = (</> ".git" </> "gitson-lock") <$> findRepoRoot path
