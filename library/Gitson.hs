@@ -22,6 +22,7 @@ createRepo path = do
     shell "git" ["init"]
     writeFile lockPath ""
 
+-- | A transaction monad.
 type TransactionWriter = WriterT [IO ()] IO ()
 
 -- | Adds a write action to a transaction.

@@ -10,8 +10,12 @@ import           System.Process
 import           System.IO
 
 -- | Combines two paths and adds the .json extension.
+--
+-- Examples:
+--
 -- >>> entryPath "things" "entry"
 -- "things/entry.json"
+--
 -- >>> entryPath "things/" "entry"
 -- "things/entry.json"
 entryPath :: FilePath -> FilePath -> FilePath
@@ -22,6 +26,7 @@ lockPath :: FilePath
 lockPath = ".git" </> "gitson-lock"
 
 -- | Turns a list of filenames into a list of keys.
+--
 -- >>> filterFilenamesAsKeys [".", "..", "k1.json"]
 -- ["k1"]
 filterFilenamesAsKeys :: [String] -> [String]
@@ -38,6 +43,7 @@ insideDirectory path action = do
   return result
 
 -- | Removes trailing whitespace like the newline you get from executing commands.
+--
 -- >>> stripWhitespaceRight "/path/to/thingy \n\n\n"
 -- "/path/to/thingy"
 stripWhitespaceRight :: FilePath -> FilePath
@@ -51,7 +57,7 @@ findRepoRoot path = stripWhitespaceRight <$> (insideDirectory path $ readProcess
 lastCommitText :: IO String
 lastCommitText = readProcess "git" ["log", "--max-count=1", "--pretty=format:%s"] []
 
--- | A /dev/null handle.
+-- | A \/dev/null handle.
 devNull :: IO Handle
 devNull = openFile "/dev/null" ReadWriteMode
 
