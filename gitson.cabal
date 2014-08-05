@@ -23,6 +23,7 @@ library
       , bytestring
       , directory
       , filepath
+      , errors
       , flock
       , aeson
     default-language: Haskell2010

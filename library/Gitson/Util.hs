@@ -2,15 +2,16 @@
 module Gitson.Util (module Gitson.Util) where
 
 import           Data.Char (isSpace)
-import           Control.Monad (void, liftM)
+import           Control.Monad (void)
+import           Control.Applicative
 import           System.FilePath
 import           System.Directory
 import           System.Process (readProcess)
 import           System.Cmd (rawSystem)
 
 -- | Combines two paths and adds the .json extension.
-makePath :: FilePath -> String -> FilePath
-makePath collPath key = collPath </> key <.> "json"
+entryPath :: FilePath -> String -> FilePath
+entryPath collPath key = collPath </> key <.> "json"
 
 -- | Turns a list of filenames into a list of keys.
 filterFilenamesAsKeys :: [String] -> [String]
@@ -32,7 +33,7 @@ stripWhitespaceRight = reverse . dropWhile isSpace . reverse
 
 -- | Finds the path to the git repository a given path belongs to.
 findRepoRoot :: FilePath -> IO FilePath
-findRepoRoot path = liftM stripWhitespaceRight $ insideDirectory path $ readProcess "git" ["rev-parse", "--show-toplevel"] []
+findRepoRoot path = stripWhitespaceRight <$> (insideDirectory path $ readProcess "git" ["rev-parse", "--show-toplevel"] [])
 
 -- | Returns the message of the last git commit in the repo where the current directory is located.
 lastCommitText :: IO String
@@ -44,4 +45,4 @@ shell cmd args = void $ rawSystem cmd args
 
 -- | Returns a lock file path.
 lockPath :: FilePath -> IO FilePath
-lockPath path = liftM (</> ".git" </> "gitson-lock") $ findRepoRoot path
+lockPath path = (</> ".git" </> "gitson-lock") <$> findRepoRoot path

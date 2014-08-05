@@ -1,5 +1,3 @@
-{-# OPTIONS_GHC -fno-warn-dodgy-exports -fwarn-unused-imports #-}
-
 -- | Gitson is a simple document store library for Git + JSON.
 module Gitson (module Gitson) where
 
@@ -8,6 +6,8 @@ import           System.Directory
 import           System.FilePath
 import           System.Lock.FLock
 import           Control.Exception
+import           Control.Applicative
+import           Control.Error.Util
 import           Data.Aeson (ToJSON, encode, FromJSON, decode)
 import qualified Data.ByteString.Lazy as BL
 import           Gitson.Util
@@ -27,7 +27,7 @@ saveToCollection collPath key content = do
   createDirectoryIfMissing True collPath
   lock <- lockPath collPath
   withLock lock Exclusive Block $ do
-    let filePath = makePath collPath key
+    let filePath = entryPath collPath key
     BL.writeFile filePath (encode content)
     repoRoot <- findRepoRoot collPath
     repoRelPath <- makeRelativeToCurrentDirectory repoRoot
@@ -40,15 +40,11 @@ saveToCollection collPath key content = do
 -- | Reads an entry from a collection by key.
 readFromCollection :: FromJSON a => FilePath -> String -> IO (Maybe a)
 readFromCollection collPath key = do
-  jsonString <- try (BL.readFile $ makePath collPath key) :: IO (Either IOException BL.ByteString)
-  case jsonString of
-    Left e -> return Nothing
-    Right val -> return $ decode val
+  jsonString <- try (BL.readFile $ entryPath collPath key) :: IO (Either IOException BL.ByteString)
+  return $ decode =<< hush jsonString
 
 -- | Lists entry keys in a collection.
 listCollection :: FilePath -> IO (Maybe [String])
 listCollection collPath = do
   contents <- try (getDirectoryContents collPath) :: IO (Either IOException [FilePath])
-  case contents of
-    Left e -> return Nothing
-    Right val -> return $ Just $ filterFilenamesAsKeys val
+  return $ filterFilenamesAsKeys <$> hush contents
