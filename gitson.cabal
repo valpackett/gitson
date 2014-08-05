@@ -23,7 +23,7 @@ source-repository head
 
 library
     build-depends:
-        base
+        base >= 4.0.0.0 && < 5
       , transformers
       , process
       , bytestring
@@ -42,7 +42,7 @@ library
 
 test-suite documentation
     build-depends:
-        base
+        base >= 4.0.0.0 && < 5
       , process == 1.*
       , regex-compat == 0.*
     default-language: Haskell2010
@@ -52,7 +52,7 @@ test-suite documentation
 
 test-suite examples
     build-depends:
-        base
+        base >= 4.0.0.0 && < 5
       , Glob == 0.*
       , doctest == 0.*
     default-language: Haskell2010
@@ -63,7 +63,7 @@ test-suite examples
 
 test-suite tests
     build-depends:
-        base
+        base >= 4.0.0.0 && < 5
       , gitson
       , transformers
       , process
@@ -84,7 +84,7 @@ test-suite tests
 
 benchmark benchmarks
     build-depends:
-        base
+        base >= 4.0.0.0 && < 5
       , directory
       , transformers
       , random
