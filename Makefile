@@ -1,4 +1,4 @@
-.PHONY: all bench build clean configure haddock hpc install repl run test
+.PHONY: all bench build clean configure haddock hpc install repl test
 
 all: install configure build haddock test hpc bench
 
@@ -20,6 +20,10 @@ haddock:
 	cabal haddock --hyperlink-source
 	open dist/doc/html/gitson/index.html
 
+hpc:
+	hpc markup --destdir=tmp dist/hpc/tix/tests/tests.tix
+	open tmp/hpc_index.html
+
 install:
 	cabal sandbox init
 	cabal install --enable-benchmarks --enable-tests --only-dependencies --reorder-goals
@@ -28,4 +32,4 @@ repl:
 	cabal repl lib:gitson
 
 test:
-	cabal test examples tests --show-details=always
+	cabal test --show-details=always --test-option=--color

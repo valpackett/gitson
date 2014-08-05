@@ -18,15 +18,15 @@ benchRepoPath = "tmp/bench-repo"
 
 setup :: IO ()
 setup = createRepo benchRepoPath >> void (transaction benchRepoPath $ do
-  saveEntry Thing {val = 1} "thing-to-read" "things")
+  saveEntry "things" "thing-to-read" Thing {val = 1})
 
 transactOneWrite :: IO ()
 transactOneWrite = transaction benchRepoPath $ do
   rnum <- liftIO $ getStdRandom $ randomR (1,100)
-  saveEntry Thing {val = rnum} "first-thing" "things"
+  saveEntry "things" "first-thing" Thing {val = rnum}
 
 readThing :: IO ()
-readThing = void (readEntry "thing-to-read" "things" :: IO (Maybe Thing))
+readThing = void (readEntry "things" "thing-to-read" :: IO (Maybe Thing))
 
 benchmarks :: [Benchmark]
 benchmarks = [

@@ -11,8 +11,6 @@ import           System.IO
 
 -- | Combines two paths and adds the .json extension.
 --
--- Examples:
---
 -- >>> entryPath "things" "entry"
 -- "things/entry.json"
 --
