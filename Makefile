@@ -14,7 +14,7 @@ clean:
 	if test -d .hpc; then rm -r .hpc; fi
 
 configure:
-	cabal configure --enable-benchmarks --enable-tests
+	cabal configure --enable-benchmarks --enable-tests --enable-library-coverage
 
 haddock:
 	cabal haddock --hyperlink-source
