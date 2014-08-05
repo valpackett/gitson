@@ -4,6 +4,9 @@ ghc:
   - 7.6
 install:
   - make install
+before_script:
+  - git config --global user.email "example@example.com"
+  - git config --global user.name "Travis CI"
 script:
   - make bench
   - make test
