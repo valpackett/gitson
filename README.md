@@ -11,13 +11,15 @@ Transactions use [flock], so it's safe even across completely separate programs!
 ## Usage
 
 ```haskell
+{-# LANGUAGE TemplateHaskell #-}
+
 import Gitson
 import Gitson.Util (insideDirectory)
 import Data.Aeson.TH
 import Control.Monad.IO.Class (liftIO)
 
 data Thing = Thing { val :: Int } deriving (Eq, Show)
-$(deriveJSON defaultOptions ''Thing)
+$(deriveJSON defaultOptions ''Thing) -- there are non-Template ways of doing this, see aeson docs
 
 main :: IO ()
 main = do
@@ -25,8 +27,9 @@ main = do
   createRepo "./content"
 
   -- Writing data to a "database" happens in transactions
-  -- A transaction is committed after the block is executed
-  -- Just like in SQL databases
+  -- A transaction is committed (write files & git commit)
+  -- after the block is executed, just like in SQL databases
+  -- Also, transactions are thread-safe
   transaction "./content" $ do
     -- order: (collection) (key        ) (data)
     saveEntry "content"    "first-thing" Thing {val = 1}
