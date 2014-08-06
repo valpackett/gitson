@@ -44,16 +44,16 @@ spec = before setup $ after cleanup $ do
       content <- readEntry "tmp/repo/things" "totally-not-a-thing" :: IO (Maybe Thing)
       content `shouldBe` Nothing
 
-  describe "listEntries" $ do
-    it "returns Just a list of entries when listing a collection" $ do
+  describe "listEntryKeys" $ do
+    it "returns Just a list of entry keys when listing a collection" $ do
       createDirectoryIfMissing True "tmp/repo/things"
       _ <- writeFile "tmp/repo/things/first-thing.json" "{}"
       _ <- writeFile "tmp/repo/things/second-thing.json" "{}"
-      list <- listEntries "tmp/repo/things"
+      list <- listEntryKeys "tmp/repo/things"
       sort <$> list `shouldBe` Just ["first-thing", "second-thing"]
 
     it "returns Nothing when listing a nonexistent collection" $ do
-      list <- listEntries "nonsense"
+      list <- listEntryKeys "nonsense"
       list `shouldBe` Nothing
 
 setup :: IO ()

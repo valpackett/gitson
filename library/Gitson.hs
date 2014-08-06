@@ -46,7 +46,7 @@ readEntry collection key = do
   return $ decode =<< hush jsonString
 
 -- | Lists entry keys in a collection.
-listEntries :: FilePath -> IO (Maybe [FilePath])
-listEntries collection = do
+listEntryKeys :: FilePath -> IO (Maybe [FilePath])
+listEntryKeys collection = do
   contents <- try (getDirectoryContents collection) :: IO (Either IOException [FilePath])
   return $ filterFilenamesAsKeys <$> hush contents

@@ -41,14 +41,14 @@ main = do
   -- Reading data
   -- (These are normal IO actions, so if you want
   --  to read inside of a transaction, liftIO)
-  keys <- listEntries "./content/things"
+  keys <- listEntryKeys "./content/things"
        -- Just ["first-thing"]
   first-thing <- readEntry "./content/things" "first-thing" :: IO (Maybe Thing)
               -- Just Thing {val = 1}
 
   -- Reading data, avoiding repetition of the repo path
   insideDirectory "./content" $ do
-    keys <- listEntries "things"
+    keys <- listEntryKeys "things"
          -- Just ["first-thing"]
     first-thing <- readEntry "things" "first-thing" :: IO (Maybe Thing)
          -- Just Thing {val = 1}
