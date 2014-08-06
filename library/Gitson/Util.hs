@@ -2,6 +2,7 @@
 module Gitson.Util (module Gitson.Util) where
 
 import           Control.Monad (void)
+import           Data.List (isSuffixOf)
 import           System.FilePath
 import           System.Directory
 import           System.Process
@@ -21,12 +22,12 @@ entryPath collection key = collection </> key <.> "json"
 lockPath :: FilePath
 lockPath = ".git" </> "gitson-lock"
 
--- | Turns a list of filenames into a list of keys.
+-- | Turns a list of filenames into a list of keys, ignoring non-JSON files.
 --
--- >>> filterFilenamesAsKeys [".", "..", "k1.json"]
+-- >>> filterFilenamesAsKeys [".", "..", "k1.json", "unrelated.file"]
 -- ["k1"]
 filterFilenamesAsKeys :: [String] -> [String]
-filterFilenamesAsKeys = map dropExtension . filter (`notElem` [".", ".."])
+filterFilenamesAsKeys = map dropExtension . filter (isSuffixOf ".json")
 
 -- | Returns an IO action that switches the current directory to a given path,
 -- executes the given IO action and switches the current directory back.
