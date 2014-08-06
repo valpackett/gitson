@@ -2,7 +2,7 @@ name:            gitson
 version:         0.2.0
 synopsis:        A document store library for Git + JSON.
 description:     A simple document store library for Git + JSON, based on Aeson. Uses command line git, at least for now. No fancy indexes and stuff, but it does what I need right now. Transactions use flock, so it's safe even across completely separate programs!
-category:        Database
+category:        Database, JSON, Git
 homepage:        https://github.com/myfreeweb/gitson
 author:          Greg V
 copyright:       2014 Greg V <floatboth@me.com>
