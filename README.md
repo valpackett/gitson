@@ -40,18 +40,20 @@ main = do
 
   -- Reading data
   -- (These are normal IO actions, so if you want
-  --  to read inside of a transaction, liftIO)
-  keys <- listEntryKeys "./content/things"
-       -- Just ["first-thing"]
-  first-thing <- readEntry "./content/things" "first-thing" :: IO (Maybe Thing)
-              -- Just Thing {val = 1}
-
-  -- Reading data, avoiding repetition of the repo path
+  --  to read inside of a transaction, liftIO.
+  --  Note: transaction already includes insideDirectory!)
   insideDirectory "./content" $ do
     keys <- listEntryKeys "things"
-         -- Just ["first-thing"]
+         -- ["first-thing"]
     first-thing <- readEntry "things" "first-thing" :: IO (Maybe Thing)
          -- Just Thing {val = 1}
+    things <- readEntries "things" :: IO ([Thing])
+           -- [Thing {val = 1}]
+
+  -- Note: insideDirectory is just a function that changes
+  -- the current directory, executes an action and changes it back.
+  -- You can use reading actions without it, like this:
+  keys <- listEntryKeys "./content/things"
 ```
 
 ## Development

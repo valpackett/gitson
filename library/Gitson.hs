@@ -9,6 +9,7 @@ import           Control.Error.Util
 import           Control.Monad.Trans.Writer
 import           Control.Monad.IO.Class (liftIO)
 import           Data.Aeson (ToJSON, encode, FromJSON, decode)
+import           Data.Maybe (fromMaybe)
 import qualified Data.ByteString.Lazy as BL
 import           Gitson.Util
 
@@ -46,7 +47,14 @@ readEntry collection key = do
   return $ decode =<< hush jsonString
 
 -- | Lists entry keys in a collection.
-listEntryKeys :: FilePath -> IO (Maybe [FilePath])
+listEntryKeys :: FilePath -> IO ([FilePath])
 listEntryKeys collection = do
   contents <- try (getDirectoryContents collection) :: IO (Either IOException [FilePath])
-  return $ filterFilenamesAsKeys <$> hush contents
+  return $ filterFilenamesAsKeys $ fromMaybe [] $ hush contents
+
+-- | Lists entries in a collection.
+listEntries :: FromJSON a => FilePath -> IO ([a])
+listEntries collection = do
+  ks <- listEntryKeys collection
+  maybes <- mapM (readEntry collection) ks
+  return $ fromMaybe [] $ sequence maybes
