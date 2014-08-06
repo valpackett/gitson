@@ -1,8 +1,8 @@
 -- | Various functions used inside Gitson.
 module Gitson.Util (module Gitson.Util) where
 
-import           Control.Monad (void)
-import           Data.List (isSuffixOf)
+import           Control.Monad (void, filterM)
+import           Data.List (isSuffixOf, isPrefixOf)
 import           System.FilePath
 import           System.Directory
 import           System.Process
@@ -28,6 +28,10 @@ lockPath = ".git" </> "gitson-lock"
 -- ["k1"]
 filterFilenamesAsKeys :: [String] -> [String]
 filterFilenamesAsKeys = map dropExtension . filter (isSuffixOf ".json")
+
+-- | Filters a list of file paths, leaving only paths to existing non-hidden directories.
+filterDirs :: [FilePath] -> IO [FilePath]
+filterDirs = (filterM doesDirectoryExist) . filter (not . isPrefixOf ".")
 
 -- | Returns an IO action that switches the current directory to a given path,
 -- executes the given IO action and switches the current directory back.

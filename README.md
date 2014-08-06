@@ -43,11 +43,13 @@ main = do
   --  to read inside of a transaction, liftIO.
   --  Note: transaction already includes insideDirectory!)
   insideDirectory "./content" $ do
+    colls <- listCollections
+          -- ["things"]
     keys <- listEntryKeys "things"
          -- ["first-thing"]
     first-thing <- readEntry "things" "first-thing" :: IO (Maybe Thing)
          -- Just Thing {val = 1}
-    things <- readEntries "things" :: IO ([Thing])
+    things <- readEntries "things" :: IO [Thing]
            -- [Thing {val = 1}]
 
   -- Note: insideDirectory is just a function that changes

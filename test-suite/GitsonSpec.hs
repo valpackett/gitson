@@ -60,13 +60,26 @@ spec = before setup $ after cleanup $ do
       createDirectoryIfMissing True "tmp/repo/things"
       _ <- writeFile "tmp/repo/things/first-thing.json" "{\"val\":1}"
       _ <- writeFile "tmp/repo/things/second-thing.json" "{\"val\":2}"
-      list <- listEntries "tmp/repo/things" :: IO ([Thing])
+      list <- listEntries "tmp/repo/things" :: IO [Thing]
       sort list `shouldBe` [Thing {val = 1}, Thing {val = 2}]
 
     it "returns an empty list when listing a nonexistent collection" $ do
-      list <- listEntries "nonsense" :: IO ([Thing])
+      list <- listEntries "nonsense" :: IO [Thing]
       list `shouldBe` []
 
+  describe "listCollections" $ do
+    it "returns a list of collections" $ do
+      createDirectoryIfMissing True "tmp/repo/bits"
+      createDirectoryIfMissing True "tmp/repo/pieces"
+      insideDirectory "tmp/repo" $ do
+        list <- listCollections
+        sort list `shouldBe` ["bits", "pieces"]
+
+    it "returns an empty list when listing an empty repo" $ do
+      createDirectoryIfMissing True "tmp/repo"
+      insideDirectory "tmp/repo" $ do
+        list <- listCollections
+        sort list `shouldBe` []
 
 setup :: IO ()
 setup = createRepo "tmp/repo"

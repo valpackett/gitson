@@ -47,14 +47,20 @@ readEntry collection key = do
   return $ decode =<< hush jsonString
 
 -- | Lists entry keys in a collection.
-listEntryKeys :: FilePath -> IO ([FilePath])
+listEntryKeys :: FilePath -> IO [FilePath]
 listEntryKeys collection = do
   contents <- try (getDirectoryContents collection) :: IO (Either IOException [FilePath])
   return $ filterFilenamesAsKeys $ fromMaybe [] $ hush contents
 
 -- | Lists entries in a collection.
-listEntries :: FromJSON a => FilePath -> IO ([a])
+listEntries :: FromJSON a => FilePath -> IO [a]
 listEntries collection = do
   ks <- listEntryKeys collection
   maybes <- mapM (readEntry collection) ks
   return $ fromMaybe [] $ sequence maybes
+
+-- | Lists collections in the current repository.
+listCollections :: IO [FilePath]
+listCollections = do
+  contents <- try (getDirectoryContents =<< getCurrentDirectory) :: IO (Either IOException [FilePath])
+  filterDirs $ fromMaybe [] $ hush contents
