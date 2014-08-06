@@ -1,5 +1,14 @@
 -- | Gitson is a simple document store library for Git + JSON.
-module Gitson (module Gitson) where
+module Gitson (
+  TransactionWriter,
+  createRepo,
+  transaction,
+  saveEntry,
+  readEntry,
+  listEntryKeys,
+  listEntries,
+  listCollections
+) where
 
 import           System.Directory
 import           System.Lock.FLock
@@ -8,10 +17,14 @@ import           Control.Applicative
 import           Control.Error.Util
 import           Control.Monad.Trans.Writer
 import           Control.Monad.IO.Class (liftIO)
-import           Data.Aeson (ToJSON, encode, FromJSON, decode)
+import           Data.Aeson (ToJSON, FromJSON, decode)
+import           Data.Aeson.Encode.Pretty
 import           Data.Maybe (fromMaybe)
 import qualified Data.ByteString.Lazy as BL
 import           Gitson.Util
+
+-- | A transaction monad.
+type TransactionWriter = WriterT [IO ()] IO ()
 
 -- | Creates a git repository under a given path.
 createRepo :: FilePath -> IO ()
@@ -20,15 +33,6 @@ createRepo path = do
   insideDirectory path $ do
     shell "git" ["init"]
     writeFile lockPath ""
-
--- | A transaction monad.
-type TransactionWriter = WriterT [IO ()] IO ()
-
--- | Adds a write action to a transaction.
-saveEntry :: ToJSON a => FilePath -> FilePath -> a -> TransactionWriter
-saveEntry collection key content = do
-  liftIO $ createDirectoryIfMissing True collection
-  tell [BL.writeFile (entryPath collection key) (encode content)]
 
 -- | Executes a blocking transaction on a repository, committing the results to git.
 transaction :: FilePath -> TransactionWriter -> IO ()
@@ -39,6 +43,15 @@ transaction repoPath action = do
     sequence_ writeActions
     shell "git" ["add", "--all"]
     shell "git" ["commit", "-m", "Gitson transaction"]
+
+prettyConfig :: Config
+prettyConfig = Config { confIndent = 2, confCompare = compare }
+
+-- | Adds a write action to a transaction.
+saveEntry :: ToJSON a => FilePath -> FilePath -> a -> TransactionWriter
+saveEntry collection key content = do
+  liftIO $ createDirectoryIfMissing True collection
+  tell [BL.writeFile (entryPath collection key) (encodePretty' prettyConfig content)]
 
 -- | Reads an entry from a collection by key.
 readEntry :: FromJSON a => FilePath -> FilePath -> IO (Maybe a)

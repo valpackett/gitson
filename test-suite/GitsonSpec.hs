@@ -26,9 +26,9 @@ spec = before setup $ after cleanup $ do
         liftIO $ (readFile "things/second-thing.json") `shouldThrow` anyIOException
       insideDirectory "tmp/repo" $ do
         first <- readFile "things/first-thing.json"
-        first `shouldBe` "{\"val\":1}"
+        first `shouldBe` "{\n  \"val\": 1\n}"
         second <- readFile "things/second-thing.json"
-        second `shouldBe` "{\"val\":2}"
+        second `shouldBe` "{\n  \"val\": 2\n}"
         commitMsg <- lastCommitText
         commitMsg `shouldBe` "Gitson transaction"
 
