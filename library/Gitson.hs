@@ -42,11 +42,12 @@ createRepo path = do
 transaction :: FilePath -> TransactionWriter -> IO ()
 transaction repoPath action = do
   insideDirectory repoPath $ withLock lockPath Exclusive Block $ do
-    shell "git" ["reset", "--hard", "HEAD"] -- Reset working tree just in case
     writeActions <- execWriterT action
+    shell "git" ["stash"] -- it's totally ok to do this without changes
     sequence_ writeActions
     shell "git" ["add", "--all"]
     shell "git" ["commit", "-m", "Gitson transaction"]
+    shell "git" ["stash", "pop"]
 
 combineKey :: (Int, String) -> String
 combineKey (n, s) = zeroPad n ++ "-" ++ s
