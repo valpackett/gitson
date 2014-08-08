@@ -17,20 +17,32 @@ $(deriveJSON defaultOptions ''Thing)
 
 spec :: Spec
 spec = before setup $ after cleanup $ do
-  describe "transaction" $ do
-    it "saves entries only after it's done" $ do
-      transaction "tmp/repo" $ do
-        saveEntry "things" "first-thing" Thing {val = 1}
-        saveEntry "things" "second-thing" Thing {val = 2}
-        liftIO $ (readFile "things/first-thing.json") `shouldThrow` anyIOException
-        liftIO $ (readFile "things/second-thing.json") `shouldThrow` anyIOException
-      insideDirectory "tmp/repo" $ do
-        first <- readFile "things/first-thing.json"
-        first `shouldBe` "{\n  \"val\": 1\n}"
-        second <- readFile "things/second-thing.json"
-        second `shouldBe` "{\n  \"val\": 2\n}"
-        commitMsg <- lastCommitText
-        commitMsg `shouldBe` "Gitson transaction"
+  context "transaction" $ do
+    describe "saveEntry" $ do
+      it "saves entries only after it's done" $ do
+        transaction "tmp/repo" $ do
+          saveEntry "things" "first-thing" Thing {val = 1}
+          saveEntry "things" "second-thing" Thing {val = 2}
+          liftIO $ (readFile "things/first-thing.json") `shouldThrow` anyIOException
+          liftIO $ (readFile "things/second-thing.json") `shouldThrow` anyIOException
+        insideDirectory "tmp/repo" $ do
+          first <- readFile "things/first-thing.json"
+          first `shouldBe` "{\n  \"val\": 1\n}"
+          second <- readFile "things/second-thing.json"
+          second `shouldBe` "{\n  \"val\": 2\n}"
+          commitMsg <- lastCommitText
+          commitMsg `shouldBe` "Gitson transaction"
+
+    describe "saveNextEntry" $ do
+      it "saves entries with next numeric ids" $ do
+        transaction "tmp/repo" $ do
+          saveNextEntry "things" "hello" Thing {val = 1}
+          saveNextEntry "things" "world" Thing {val = 2}
+        insideDirectory "tmp/repo" $ do
+          first <- readFile "things/000001-hello.json"
+          first `shouldBe` "{\n  \"val\": 1\n}"
+          second <- readFile "things/000002-world.json"
+          second `shouldBe` "{\n  \"val\": 2\n}"
 
   describe "readEntry" $ do
     it "returns Just the entry when reading an entry by key" $ do
@@ -41,6 +53,28 @@ spec = before setup $ after cleanup $ do
 
     it "returns Nothing when reading by a nonexistent key" $ do
       content <- readEntry "tmp/repo/things" "totally-not-a-thing" :: IO (Maybe Thing)
+      content `shouldBe` Nothing
+
+  describe "readEntryById" $ do
+    it "returns Just the entry when reading an entry by id" $ do
+      createDirectoryIfMissing True "tmp/repo/things"
+      _ <- writeFile "tmp/repo/things/000004-second-thing.json" "{\"val\":1}"
+      content <- readEntryById "tmp/repo/things" 4 :: IO (Maybe Thing)
+      content `shouldBe` Just Thing {val = 1}
+
+    it "returns Nothing when reading by a nonexistent id" $ do
+      content <- readEntryById "tmp/repo/things" 1 :: IO (Maybe Thing)
+      content `shouldBe` Nothing
+
+  describe "readEntryByName" $ do
+    it "returns Just the entry when reading an entry by name" $ do
+      createDirectoryIfMissing True "tmp/repo/things"
+      _ <- writeFile "tmp/repo/things/000098-second-thing.json" "{\"val\":1}"
+      content <- readEntryByName "tmp/repo/things" "second-thing" :: IO (Maybe Thing)
+      content `shouldBe` Just Thing {val = 1}
+
+    it "returns Nothing when reading by a nonexistent name" $ do
+      content <- readEntryByName "tmp/repo/things" "yolo" :: IO (Maybe Thing)
       content `shouldBe` Nothing
 
   describe "listEntryKeys" $ do

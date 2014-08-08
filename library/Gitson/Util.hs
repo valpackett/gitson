@@ -2,7 +2,9 @@
 module Gitson.Util (module Gitson.Util) where
 
 import           Control.Monad (void, filterM)
+import           Control.Applicative
 import           Data.List (isSuffixOf, isPrefixOf)
+import           Data.Maybe
 import           System.FilePath
 import           System.Directory
 import           System.Process
@@ -57,3 +59,38 @@ shell cmd args = void $ do
   dnull <- devNull
   (_, _, _, pid) <- createProcess (proc cmd args){std_in = UseHandle dnull, std_out = UseHandle dnull, std_err = UseHandle dnull}
   waitForProcess pid
+
+-- I can't believe there's nothing like this in Data.Maybe
+-- | Adds a value to a Maybe.
+intoMaybe :: Maybe a -> b -> Maybe (a, b)
+intoMaybe (Just x) y = Just (x, y)
+intoMaybe Nothing y = Nothing
+
+-- | Tries to extract the first int out of a string.
+--
+-- >>> maybeReadIntString "0123-hell0w0rld"
+-- Just (123,"-hell0w0rld")
+--
+-- >>> maybeReadIntString "1"
+-- Just (1,"")
+--
+-- >>> maybeReadIntString "hello"
+-- Nothing
+maybeReadIntString :: String -> Maybe (Int, String)
+maybeReadIntString x = listToMaybe (reads x :: [(Int, String)])
+
+-- | Returns the next numeric id in a sequence of keys.
+--
+-- >>> nextKeyId []
+-- 1
+--
+-- >>> nextKeyId ["aaaaarrrrrrrrrrr"]
+-- 1
+--
+-- >>> nextKeyId ["1-hell0-w0rld-123456.json", "002-my-second-post.json"]
+-- 3
+nextKeyId :: [FilePath] -> Int
+nextKeyId = (+1) . maxOrZero . catMaybes . map maybeReadInt
+  where maybeReadInt x = fst <$> maybeReadIntString x
+        maxOrZero [] = 0
+        maxOrZero xs = maximum xs
