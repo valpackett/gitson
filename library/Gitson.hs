@@ -15,10 +15,9 @@ module Gitson (
 
 import           System.Directory
 import           System.Lock.FLock
-import           Control.Exception
-import           Control.Error.Util
+import           Control.Exception (try, IOException)
+import           Control.Error.Util (hush)
 import           Control.Monad.Trans.Writer
-import           Control.Monad.IO.Class (liftIO)
 import           Data.Aeson (ToJSON, FromJSON, decode)
 import           Data.Aeson.Encode.Pretty
 import           Data.Maybe (fromMaybe, catMaybes)
