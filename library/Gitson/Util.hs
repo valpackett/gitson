@@ -49,14 +49,10 @@ insideDirectory path action = do
 lastCommitText :: IO String
 lastCommitText = readProcess "git" ["log", "--max-count=1", "--pretty=format:%s"] []
 
--- | A \/dev/null handle.
-devNull :: IO Handle
-devNull = openFile "/dev/null" ReadWriteMode
-
 -- | Runs a shell command with stdin, stdout and stderr set to /dev/null.
 shell :: String -> [String] -> IO ()
 shell cmd args = void $ do
-  dnull <- devNull
+  dnull <- openFile "/dev/null" ReadWriteMode
   (_, _, _, pid) <- createProcess (proc cmd args){std_in = UseHandle dnull, std_out = UseHandle dnull, std_err = UseHandle dnull}
   waitForProcess pid
 
