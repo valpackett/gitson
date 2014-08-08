@@ -17,7 +17,7 @@ import           System.IO
 --
 -- >>> entryPath "things/" "entry"
 -- "things/entry.json"
-entryPath :: FilePath -> FilePath -> FilePath
+entryPath :: FilePath -> String -> FilePath
 entryPath collection key = collection </> key <.> "json"
 
 -- | Path to the transaction lock file, relative to the repo root.
@@ -28,7 +28,7 @@ lockPath = ".git" </> "gitson-lock"
 --
 -- >>> filterFilenamesAsKeys [".", "..", "k1.json", "unrelated.file"]
 -- ["k1"]
-filterFilenamesAsKeys :: [String] -> [String]
+filterFilenamesAsKeys :: [FilePath] -> [String]
 filterFilenamesAsKeys = map dropExtension . filter (isSuffixOf ".json")
 
 -- | Filters a list of file paths, leaving only paths to existing non-hidden directories.
@@ -85,7 +85,7 @@ maybeReadIntString x = listToMaybe (reads x :: [(Int, String)])
 --
 -- >>> nextKeyId ["1-hell0-w0rld-123456.json", "002-my-second-post.json"]
 -- 3
-nextKeyId :: [FilePath] -> Int
+nextKeyId :: [String] -> Int
 nextKeyId = (+1) . maxOrZero . catMaybes . map maybeReadInt
   where maybeReadInt x = fst <$> maybeReadIntString x
         maxOrZero [] = 0

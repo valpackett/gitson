@@ -56,18 +56,18 @@ combineKey (n, s) = zeroPad n ++ "-" ++ s
 prettyConfig :: Config
 prettyConfig = Config { confIndent = 2, confCompare = compare }
 
-writeEntry :: ToJSON a => FilePath -> FilePath -> a -> IO ()
+writeEntry :: ToJSON a => FilePath -> String -> a -> IO ()
 writeEntry collection key content = BL.writeFile (entryPath collection key) (encodePretty' prettyConfig content)
 
 -- | Adds a write action to a transaction.
-saveEntry :: ToJSON a => FilePath -> FilePath -> a -> TransactionWriter
+saveEntry :: ToJSON a => FilePath -> String -> a -> TransactionWriter
 saveEntry collection key content = do
   tell [createDirectoryIfMissing True collection,
         writeEntry collection key content]
 
 -- | Adds a write action to a transaction.
 -- The key will start with a numeric id, incremented from the last id in the collection.
-saveNextEntry :: ToJSON a => FilePath -> FilePath -> a -> TransactionWriter
+saveNextEntry :: ToJSON a => FilePath -> String -> a -> TransactionWriter
 saveNextEntry collection key content = do
   tell [createDirectoryIfMissing True collection,
         listEntryKeys collection >>=
