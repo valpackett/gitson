@@ -25,12 +25,21 @@ transactOneWrite = transaction benchRepoPath $ do
   rnum <- liftIO $ getStdRandom $ randomR (1,100)
   saveEntry "things" "first-thing" Thing {val = rnum}
 
+transactNextWrites :: IO ()
+transactNextWrites = transaction benchRepoPath $ do
+  rnum <- liftIO $ getStdRandom $ randomR (1,100)
+  saveNextEntry "things" "thing" Thing {val = rnum}
+  saveNextEntry "things" "thing" Thing {val = rnum}
+  saveNextEntry "things" "thing" Thing {val = rnum}
+  saveNextEntry "things" "thing" Thing {val = rnum}
+
 readThing :: IO ()
 readThing = void (readEntry "things" "thing-to-read" :: IO (Maybe Thing))
 
 benchmarks :: [Benchmark]
 benchmarks = [
     bench "transaction with 1 write" $ nfIO transactOneWrite
+  , bench "transaction with 4 writes with incrementing ids" $ nfIO transactNextWrites
   , bench "1 read" $ nfIO $ readThing ]
 
 cleanup :: IO ()
