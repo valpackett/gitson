@@ -42,7 +42,7 @@ main = do
   -- (These are normal IO actions, so if you want
   --  to read inside of a transaction, liftIO.
   --  Note: transaction already includes insideDirectory!
-  --  Warning: you can't read what you're writing in a transaction!!!
+  --  Warning: you can't read what you've written in the current transaction!!!
   --  You can only read what's been written before the transaction began.)
   insideDirectory "./content" $ do
     colls <- listCollections
