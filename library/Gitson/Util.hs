@@ -56,11 +56,15 @@ shell cmd args = void $ do
   (_, _, _, pid) <- createProcess (proc cmd args){std_in = UseHandle dnull, std_out = UseHandle dnull, std_err = UseHandle dnull}
   waitForProcess pid
 
--- I can't believe there's nothing like this in Data.Maybe
--- | Adds a value to a Maybe.
-intoMaybe :: Maybe a -> b -> Maybe (a, b)
-intoMaybe (Just x) y = Just (x, y)
-intoMaybe Nothing y = Nothing
+-- | Appends a value to a functor, making the inside a tuple if it's a single value.
+--
+-- >>> intoFunctor (Just 1) 2
+-- Just (1,2)
+--
+-- >>> intoFunctor Nothing 2
+-- Nothing
+intoFunctor :: Functor f => f a -> b -> f (a, b)
+intoFunctor f x = fmap (flip (,) x) f
 
 -- | Tries to extract the first int out of a string.
 --

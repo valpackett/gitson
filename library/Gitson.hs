@@ -101,7 +101,7 @@ readEntry collection key = do
 
 splitFindAndReadEntry :: FromJSON a => FilePath -> ([((Int, String), String)] -> Maybe ((Int, String), String)) -> IO (Maybe a)
 splitFindAndReadEntry collection finder = listEntryKeys collection >>=
-  maybeReadEntry . finder . catMaybes . (map $ \x -> intoMaybe (maybeReadIntString x) x)
+  maybeReadEntry . finder . catMaybes . (map $ \x -> intoFunctor (maybeReadIntString x) x)
   where maybeReadEntry (Just x) = readEntry collection $ snd x
         maybeReadEntry Nothing = return Nothing
 
