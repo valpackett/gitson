@@ -67,8 +67,13 @@ main = do
     -- will save to things/000001-hello-world.json
   insideDirectory "./content" $ do
     thing <- readDocumentById "things" 1
-    same-thing <- readDocumentByName "thing" "hello-world"
+    same-thing <- readDocumentByName "things" "hello-world"
     -- both will read from things/000001-hello-world.json
+    
+    i <- documentIdFromName "things" "hello-world"
+      -- 1
+    n <- documentNameFromId "things" 1
+      -- "hello-world"
 ```
 
 ## Development

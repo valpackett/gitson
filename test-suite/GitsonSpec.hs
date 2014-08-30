@@ -77,6 +77,28 @@ spec = before setup $ after cleanup $ do
       content <- readDocumentByName "tmp/repo/things" "yolo" :: IO (Maybe Thing)
       content `shouldBe` Nothing
 
+  describe "documentIdFromName" $ do
+    it "returns Just the document id from the document's name" $ do
+      createDirectoryIfMissing True "tmp/repo/things"
+      _ <- writeFile "tmp/repo/things/000098-some-thing.json" "THIS SHOULD NOT BE READ"
+      i <- documentIdFromName "tmp/repo/things" "some-thing"
+      i `shouldBe` Just 98
+
+    it "returns Nothing when run with a nonexistent name" $ do
+      i <- documentIdFromName "tmp/repo/things" "yolo"
+      i `shouldBe` Nothing
+
+  describe "documentNameFromId" $ do
+    it "returns Just the document name from the document's id" $ do
+      createDirectoryIfMissing True "tmp/repo/things"
+      _ <- writeFile "tmp/repo/things/000098-some-thing.json" "THIS SHOULD NOT BE READ"
+      i <- documentNameFromId "tmp/repo/things" 98
+      i `shouldBe` Just "some-thing"
+
+    it "returns Nothing when run with a nonexistent id" $ do
+      i <- documentNameFromId "tmp/repo/things" 123
+      i `shouldBe` Nothing
+
   describe "listDocumentKeys" $ do
     it "returns a list of document keys when listing a collection" $ do
       createDirectoryIfMissing True "tmp/repo/things"
