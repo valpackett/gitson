@@ -101,14 +101,14 @@ readEntry collection key = do
 
 splitFindAndReadEntry :: FromJSON a => FilePath -> ([((Int, String), String)] -> Maybe ((Int, String), String)) -> IO (Maybe a)
 splitFindAndReadEntry collection finder = listEntryKeys collection >>=
-  maybeReadEntry . finder . catMaybes . (map $ \x -> intoFunctor (maybeReadIntString x) x)
+  maybeReadEntry . finder . catMaybes . map (\x -> intoFunctor (maybeReadIntString x) x)
   where maybeReadEntry (Just x) = readEntry collection $ snd x
         maybeReadEntry Nothing = return Nothing
 
 -- | Reads an entry from a collection by numeric id (for example, key "00001-hello" has id 1)..
 readEntryById :: FromJSON a => FilePath -> Int -> IO (Maybe a)
-readEntryById collection n = splitFindAndReadEntry collection $ find ((== n) . fst . fst)
+readEntryById collection n = splitFindAndReadEntry collection $ find $ (== n) . fst . fst
 
 -- | Reads an entry from a collection by name (for example, key "00001-hello" has name "hello").
 readEntryByName :: FromJSON a => FilePath -> String -> IO (Maybe a)
-readEntryByName collection n = splitFindAndReadEntry collection $ find ((isSuffixOf n) . snd . fst)
+readEntryByName collection n = splitFindAndReadEntry collection $ find $ (isSuffixOf n) . snd . fst
