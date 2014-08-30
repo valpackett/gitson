@@ -3,14 +3,14 @@ module Gitson (
   TransactionWriter,
   createRepo,
   transaction,
-  saveEntry,
-  saveNextEntry,
+  saveDocument,
+  saveNextDocument,
   listCollections,
-  listEntryKeys,
+  listDocumentKeys,
   listEntries,
-  readEntry,
-  readEntryById,
-  readEntryByName
+  readDocument,
+  readDocumentById,
+  readDocumentByName
 ) where
 
 import           System.Directory
@@ -56,23 +56,23 @@ combineKey (n, s) = zeroPad n ++ "-" ++ s
 prettyConfig :: Config
 prettyConfig = Config { confIndent = 2, confCompare = compare }
 
-writeEntry :: ToJSON a => FilePath -> String -> a -> IO ()
-writeEntry collection key content = BL.writeFile (entryPath collection key) (encodePretty' prettyConfig content)
+writeDocument :: ToJSON a => FilePath -> String -> a -> IO ()
+writeDocument collection key content = BL.writeFile (documentPath collection key) (encodePretty' prettyConfig content)
 
 -- | Adds a write action to a transaction.
-saveEntry :: ToJSON a => FilePath -> String -> a -> TransactionWriter
-saveEntry collection key content = do
+saveDocument :: ToJSON a => FilePath -> String -> a -> TransactionWriter
+saveDocument collection key content = do
   tell [createDirectoryIfMissing True collection,
-        writeEntry collection key content]
+        writeDocument collection key content]
 
 -- | Adds a write action to a transaction.
 -- The key will start with a numeric id, incremented from the last id in the collection.
-saveNextEntry :: ToJSON a => FilePath -> String -> a -> TransactionWriter
-saveNextEntry collection key content = do
+saveNextDocument :: ToJSON a => FilePath -> String -> a -> TransactionWriter
+saveNextDocument collection key content = do
   tell [createDirectoryIfMissing True collection,
-        listEntryKeys collection >>=
+        listDocumentKeys collection >>=
         return . nextKeyId >>=
-        \nextId -> writeEntry collection (combineKey (nextId, key)) content]
+        \nextId -> writeDocument collection (combineKey (nextId, key)) content]
 
 -- | Lists collections in the current repository.
 listCollections :: IO [FilePath]
@@ -80,35 +80,35 @@ listCollections = do
   contents <- try (getDirectoryContents =<< getCurrentDirectory) :: IO (Either IOException [FilePath])
   filterDirs $ fromMaybe [] $ hush contents
 
--- | Lists entry keys in a collection.
-listEntryKeys :: FilePath -> IO [String]
-listEntryKeys collection = do
+-- | Lists document keys in a collection.
+listDocumentKeys :: FilePath -> IO [String]
+listDocumentKeys collection = do
   contents <- try (getDirectoryContents collection) :: IO (Either IOException [String])
   return $ filterFilenamesAsKeys $ fromMaybe [] $ hush contents
 
 -- | Lists entries in a collection.
 listEntries :: FromJSON a => FilePath -> IO [a]
 listEntries collection = do
-  ks <- listEntryKeys collection
-  maybes <- mapM (readEntry collection) ks
+  ks <- listDocumentKeys collection
+  maybes <- mapM (readDocument collection) ks
   return $ fromMaybe [] $ sequence maybes
 
--- | Reads an entry from a collection by key.
-readEntry :: FromJSON a => FilePath -> String -> IO (Maybe a)
-readEntry collection key = do
-  jsonString <- try (BL.readFile $ entryPath collection key) :: IO (Either IOException BL.ByteString)
+-- | Reads an document from a collection by key.
+readDocument :: FromJSON a => FilePath -> String -> IO (Maybe a)
+readDocument collection key = do
+  jsonString <- try (BL.readFile $ documentPath collection key) :: IO (Either IOException BL.ByteString)
   return $ decode =<< hush jsonString
 
-splitFindAndReadEntry :: FromJSON a => FilePath -> ([((Int, String), String)] -> Maybe ((Int, String), String)) -> IO (Maybe a)
-splitFindAndReadEntry collection finder = listEntryKeys collection >>=
-  maybeReadEntry . finder . catMaybes . map (\x -> intoFunctor (maybeReadIntString x) x)
-  where maybeReadEntry (Just x) = readEntry collection $ snd x
-        maybeReadEntry Nothing = return Nothing
+splitFindAndReadDocument :: FromJSON a => FilePath -> ([((Int, String), String)] -> Maybe ((Int, String), String)) -> IO (Maybe a)
+splitFindAndReadDocument collection finder = listDocumentKeys collection >>=
+  maybeReadDocument . finder . catMaybes . map (\x -> intoFunctor (maybeReadIntString x) x)
+  where maybeReadDocument (Just x) = readDocument collection $ snd x
+        maybeReadDocument Nothing = return Nothing
 
--- | Reads an entry from a collection by numeric id (for example, key "00001-hello" has id 1)..
-readEntryById :: FromJSON a => FilePath -> Int -> IO (Maybe a)
-readEntryById collection n = splitFindAndReadEntry collection $ find $ (== n) . fst . fst
+-- | Reads an document from a collection by numeric id (for example, key "00001-hello" has id 1)..
+readDocumentById :: FromJSON a => FilePath -> Int -> IO (Maybe a)
+readDocumentById collection n = splitFindAndReadDocument collection $ find $ (== n) . fst . fst
 
--- | Reads an entry from a collection by name (for example, key "00001-hello" has name "hello").
-readEntryByName :: FromJSON a => FilePath -> String -> IO (Maybe a)
-readEntryByName collection n = splitFindAndReadEntry collection $ find $ (isSuffixOf n) . snd . fst
+-- | Reads an document from a collection by name (for example, key "00001-hello" has name "hello").
+readDocumentByName :: FromJSON a => FilePath -> String -> IO (Maybe a)
+readDocumentByName collection n = splitFindAndReadDocument collection $ find $ (isSuffixOf n) . snd . fst

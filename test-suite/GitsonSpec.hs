@@ -18,11 +18,11 @@ $(deriveJSON defaultOptions ''Thing)
 spec :: Spec
 spec = before setup $ after cleanup $ do
   context "transaction" $ do
-    describe "saveEntry" $ do
+    describe "saveDocument" $ do
       it "saves entries only after it's done" $ do
         transaction "tmp/repo" $ do
-          saveEntry "things" "first-thing" Thing {val = 1}
-          saveEntry "things" "second-thing" Thing {val = 2}
+          saveDocument "things" "first-thing" Thing {val = 1}
+          saveDocument "things" "second-thing" Thing {val = 2}
           liftIO $ (readFile "things/first-thing.json") `shouldThrow` anyIOException
           liftIO $ (readFile "things/second-thing.json") `shouldThrow` anyIOException
         insideDirectory "tmp/repo" $ do
@@ -33,60 +33,60 @@ spec = before setup $ after cleanup $ do
           commitMsg <- lastCommitText
           commitMsg `shouldBe` "Gitson transaction"
 
-    describe "saveNextEntry" $ do
+    describe "saveNextDocument" $ do
       it "saves entries with next numeric ids" $ do
         transaction "tmp/repo" $ do
-          saveNextEntry "things" "hello" Thing {val = 1}
-          saveNextEntry "things" "world" Thing {val = 2}
+          saveNextDocument "things" "hello" Thing {val = 1}
+          saveNextDocument "things" "world" Thing {val = 2}
         insideDirectory "tmp/repo" $ do
           first <- readFile "things/000001-hello.json"
           first `shouldBe` "{\n  \"val\": 1\n}"
           second <- readFile "things/000002-world.json"
           second `shouldBe` "{\n  \"val\": 2\n}"
 
-  describe "readEntry" $ do
-    it "returns Just the entry when reading an entry by key" $ do
+  describe "readDocument" $ do
+    it "returns Just the document when reading an document by key" $ do
       createDirectoryIfMissing True "tmp/repo/things"
       _ <- writeFile "tmp/repo/things/second-thing.json" "{\"val\":2}"
-      content <- readEntry "tmp/repo/things" "second-thing" :: IO (Maybe Thing)
+      content <- readDocument "tmp/repo/things" "second-thing" :: IO (Maybe Thing)
       content `shouldBe` Just Thing {val = 2}
 
     it "returns Nothing when reading by a nonexistent key" $ do
-      content <- readEntry "tmp/repo/things" "totally-not-a-thing" :: IO (Maybe Thing)
+      content <- readDocument "tmp/repo/things" "totally-not-a-thing" :: IO (Maybe Thing)
       content `shouldBe` Nothing
 
-  describe "readEntryById" $ do
-    it "returns Just the entry when reading an entry by id" $ do
+  describe "readDocumentById" $ do
+    it "returns Just the document when reading an document by id" $ do
       createDirectoryIfMissing True "tmp/repo/things"
       _ <- writeFile "tmp/repo/things/000004-second-thing.json" "{\"val\":1}"
-      content <- readEntryById "tmp/repo/things" 4 :: IO (Maybe Thing)
+      content <- readDocumentById "tmp/repo/things" 4 :: IO (Maybe Thing)
       content `shouldBe` Just Thing {val = 1}
 
     it "returns Nothing when reading by a nonexistent id" $ do
-      content <- readEntryById "tmp/repo/things" 1 :: IO (Maybe Thing)
+      content <- readDocumentById "tmp/repo/things" 1 :: IO (Maybe Thing)
       content `shouldBe` Nothing
 
-  describe "readEntryByName" $ do
-    it "returns Just the entry when reading an entry by name" $ do
+  describe "readDocumentByName" $ do
+    it "returns Just the document when reading an document by name" $ do
       createDirectoryIfMissing True "tmp/repo/things"
       _ <- writeFile "tmp/repo/things/000098-second-thing.json" "{\"val\":1}"
-      content <- readEntryByName "tmp/repo/things" "second-thing" :: IO (Maybe Thing)
+      content <- readDocumentByName "tmp/repo/things" "second-thing" :: IO (Maybe Thing)
       content `shouldBe` Just Thing {val = 1}
 
     it "returns Nothing when reading by a nonexistent name" $ do
-      content <- readEntryByName "tmp/repo/things" "yolo" :: IO (Maybe Thing)
+      content <- readDocumentByName "tmp/repo/things" "yolo" :: IO (Maybe Thing)
       content `shouldBe` Nothing
 
-  describe "listEntryKeys" $ do
-    it "returns a list of entry keys when listing a collection" $ do
+  describe "listDocumentKeys" $ do
+    it "returns a list of document keys when listing a collection" $ do
       createDirectoryIfMissing True "tmp/repo/things"
       _ <- writeFile "tmp/repo/things/first-thing.json" "{}"
       _ <- writeFile "tmp/repo/things/second-thing.json" "{}"
-      list <- listEntryKeys "tmp/repo/things"
+      list <- listDocumentKeys "tmp/repo/things"
       sort list `shouldBe` ["first-thing", "second-thing"]
 
     it "returns an empty when listing a nonexistent collection" $ do
-      list <- listEntryKeys "nonsense"
+      list <- listDocumentKeys "nonsense"
       list `shouldBe` []
 
   describe "listEntries" $ do

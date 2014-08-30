@@ -31,8 +31,8 @@ main = do
   -- after the block is executed, just like in SQL databases
   -- Also, transactions are thread-safe
   transaction "./content" $ do
-    -- order: (collection) (key        ) (data)
-    saveEntry "things"     "first-thing" Thing {val = 1}
+    -- order:    (collection) (key        ) (data)
+    saveDocument "things"     "first-thing" Thing {val = 1}
     -- Collections are created automatically, like in MongoDB
     liftIO $ putStrLn "Written first-thing"
     -- You have to use liftIO to do IO actions inside of a transaction!
@@ -47,9 +47,9 @@ main = do
   insideDirectory "./content" $ do
     colls <- listCollections
           -- ["things"]
-    keys <- listEntryKeys "things"
+    keys <- listDocumentKeys "things"
          -- ["first-thing"]
-    first-thing <- readEntry "things" "first-thing" :: IO (Maybe Thing)
+    first-thing <- readDocument "things" "first-thing" :: IO (Maybe Thing)
          -- Just Thing {val = 1}
     things <- readEntries "things" :: IO [Thing]
            -- [Thing {val = 1}]
@@ -57,17 +57,17 @@ main = do
   -- Note: insideDirectory is just a function that changes
   -- the current directory, executes an action and changes it back.
   -- You can use reading actions without it, like this:
-  keys <- listEntryKeys "./content/things"
+  keys <- listDocumentKeys "./content/things"
 
 
   -- And now, some bells and whistles:
   -- Numeric id support
   transaction "./content" $ do
-    saveNextEntry "things" "hello-world" Thing {val = 1}
+    saveNextDocument "things" "hello-world" Thing {val = 1}
     -- will save to things/000001-hello-world.json
   insideDirectory "./content" $ do
-    thing <- readEntryById "things" 1
-    same-thing <- readEntryByName "thing" "hello-world"
+    thing <- readDocumentById "things" 1
+    same-thing <- readDocumentByName "thing" "hello-world"
     -- both will read from things/000001-hello-world.json
 ```
 

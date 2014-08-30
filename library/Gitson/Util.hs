@@ -12,13 +12,13 @@ import           System.IO
 
 -- | Combines two paths and adds the .json extension.
 --
--- >>> entryPath "things" "entry"
--- "things/entry.json"
+-- >>> documentPath "things" "document"
+-- "things/document.json"
 --
--- >>> entryPath "things/" "entry"
--- "things/entry.json"
-entryPath :: FilePath -> String -> FilePath
-entryPath collection key = collection </> key <.> "json"
+-- >>> documentPath "things/" "document"
+-- "things/document.json"
+documentPath :: FilePath -> String -> FilePath
+documentPath collection key = collection </> key <.> "json"
 
 -- | Path to the transaction lock file, relative to the repo root.
 lockPath :: FilePath
