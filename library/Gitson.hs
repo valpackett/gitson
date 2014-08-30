@@ -33,20 +33,20 @@ type TransactionWriter = WriterT [IO ()] IO ()
 createRepo :: FilePath -> IO ()
 createRepo path = do
   createDirectoryIfMissing True path
-  insideDirectory path $ do
-    shell "git" ["init"]
-    writeFile lockPath ""
+  insideDirectory path $ shell "git" ["init"]
 
 -- | Executes a blocking transaction on a repository, committing the results to git.
 transaction :: FilePath -> TransactionWriter -> IO ()
 transaction repoPath action = do
-  insideDirectory repoPath $ withLock lockPath Exclusive Block $ do
-    writeActions <- execWriterT action
-    shell "git" ["stash"] -- it's totally ok to do this without changes
-    sequence_ writeActions
-    shell "git" ["add", "--all"]
-    shell "git" ["commit", "-m", "Gitson transaction"]
-    shell "git" ["stash", "pop"]
+  insideDirectory repoPath $ do
+    writeFile lockPath ""
+    withLock lockPath Exclusive Block $ do
+      writeActions <- execWriterT action
+      shell "git" ["stash"] -- it's totally ok to do this without changes
+      sequence_ writeActions
+      shell "git" ["add", "--all"]
+      shell "git" ["commit", "-m", "Gitson transaction"]
+      shell "git" ["stash", "pop"]
 
 combineKey :: (Int, String) -> String
 combineKey (n, s) = zeroPad n ++ "-" ++ s
