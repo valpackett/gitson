@@ -1,3 +1,5 @@
+{-# LANGUAGE Safe #-}
+
 -- | Gitson is a simple document store library for Git + JSON.
 module Gitson (
   TransactionWriter
@@ -21,13 +23,12 @@ import           Control.Applicative ((<$>))
 import           Control.Exception (try, IOException)
 import           Control.Error.Util (hush)
 import           Control.Monad.Trans.Writer
-import           Data.Aeson (ToJSON, FromJSON, decode)
-import           Data.Aeson.Encode.Pretty
 import           Data.Maybe (fromMaybe, catMaybes)
 import           Data.List (find, isSuffixOf)
 import           Text.Printf (printf)
 import qualified Data.ByteString.Lazy as BL
 import           Gitson.Util
+import           Gitson.Json
 
 -- | A transaction monad.
 type TransactionWriter = WriterT [IO ()] IO ()
@@ -60,11 +61,8 @@ combineKey (n, s) = zeroPad n ++ "-" ++ s
   where zeroPad :: Int -> String
         zeroPad x = printf "%06d" x
 
-prettyConfig :: Config
-prettyConfig = Config { confIndent = 2, confCompare = compare }
-
 writeDocument :: ToJSON a => FilePath -> FileName -> a -> IO ()
-writeDocument collection key content = BL.writeFile (documentPath collection key) (encodePretty' prettyConfig content)
+writeDocument collection key content = BL.writeFile (documentPath collection key) (encode content)
 
 -- | Adds a write action to a transaction.
 saveDocument :: ToJSON a => FilePath -> FileName -> a -> TransactionWriter

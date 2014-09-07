@@ -1,3 +1,5 @@
+{-# LANGUAGE Safe #-}
+
 -- | Various functions used inside Gitson.
 module Gitson.Util (module Gitson.Util) where
 
