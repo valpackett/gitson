@@ -67,7 +67,7 @@ writeDocument :: ToJSON a => FilePath -> FileName -> a -> IO ()
 writeDocument collection key content = BL.writeFile (documentPath collection key) (encode content)
 
 -- | Adds a write action to a transaction.
-saveDocument :: (MonadIO i) => ToJSON a => FilePath -> FileName -> a -> TransactionWriter i ()
+saveDocument :: (MonadIO i, ToJSON a) => FilePath -> FileName -> a -> TransactionWriter i ()
 saveDocument collection key content = do
   tell [createDirectoryIfMissing True collection,
         writeDocument collection key content]
@@ -82,48 +82,38 @@ saveNextDocument collection key content = do
         \nextId -> writeDocument collection (combineKey (nextId, key)) content]
 
 -- | Lists collections in the current repository.
-listCollections :: IO [FilePath]
-listCollections = do
+listCollections :: (MonadIO i) => i [FilePath]
+listCollections = liftIO $ do
   contents <- try (getDirectoryContents =<< getCurrentDirectory) :: IO (Either IOException [FilePath])
   filterDirs $ fromMaybe [] $ hush contents
 
 -- | Lists document keys in a collection.
-listDocumentKeys :: FilePath -> IO [FileName]
-listDocumentKeys collection = do
+listDocumentKeys :: (MonadIO i) => FilePath -> i [FileName]
+listDocumentKeys collection = liftIO $ do
   contents <- try (getDirectoryContents collection) :: IO (Either IOException [String])
   return $ filterFilenamesAsKeys $ fromMaybe [] $ hush contents
 
 -- | Lists entries in a collection.
-listEntries :: FromJSON a => FilePath -> IO [a]
-listEntries collection = do
+listEntries :: (MonadIO i, FromJSON a) => FilePath -> i [a]
+listEntries collection = liftIO $ do
   ks <- listDocumentKeys collection
   maybes <- mapM (readDocument collection) ks
   return $ fromMaybe [] $ sequence maybes
 
 -- | Reads a document from a collection by key.
-readDocument :: FromJSON a => FilePath -> FileName -> IO (Maybe a)
-readDocument collection key = do
+readDocument :: (MonadIO i, FromJSON a) => FilePath -> FileName -> i (Maybe a)
+readDocument collection key = liftIO $ do
   jsonString <- try (BL.readFile $ documentPath collection key) :: IO (Either IOException BL.ByteString)
   return $ decode =<< hush jsonString
 
-readDocument' :: FromJSON a => FilePath -> Maybe FileName -> IO (Maybe a)
-readDocument' collection key = case key of
+readDocument' :: (MonadIO i, FromJSON a) => FilePath -> Maybe FileName -> i (Maybe a)
+readDocument' collection key = liftIO $ case key of
   Just key -> readDocument collection key
   Nothing -> return Nothing
 
-splitFindDocument :: FilePath -> Finder -> IO (Maybe (IdAndName, FileName))
+splitFindDocument :: (MonadIO i) => FilePath -> Finder -> i (Maybe (IdAndName, FileName))
 splitFindDocument collection finder = listDocumentKeys collection >>=
   return . finder . catMaybes . map (\x -> intoFunctor (maybeReadIntString x) x)
-
-extractIdAndName :: Maybe (IdAndName, FileName) -> IO (Maybe IdAndName)
-extractIdAndName m = case m of
-                       Just (ian, _) -> return $ Just ian
-                       _ -> return Nothing
-
-extractFilename :: Maybe (IdAndName, FileName) -> IO (Maybe FileName)
-extractFilename m = case m of
-                     Just (_, fname) -> return $ Just fname
-                     _ -> return Nothing
 
 findById :: Int -> Finder
 findById i = find $ (== i) . fst . fst
@@ -132,31 +122,29 @@ findByName :: String -> Finder
 findByName n = find $ (isSuffixOf n) . snd . fst
 
 -- | Reads a document from a collection by numeric id (for example, key "00001-hello" has id 1).
-readDocumentById :: FromJSON a => FilePath -> Int -> IO (Maybe a)
+readDocumentById :: (MonadIO i, FromJSON a) => FilePath -> Int -> i (Maybe a)
 readDocumentById collection i =
   splitFindDocument collection (findById i) >>=
-  extractFilename >>=
+  return . (snd <$>) >>=
   readDocument' collection
 
 -- | Reads a document from a collection by name (for example, key "00001-hello" has name "hello").
-readDocumentByName :: FromJSON a => FilePath -> String -> IO (Maybe a)
+readDocumentByName :: (MonadIO i, FromJSON a) => FilePath -> String -> i (Maybe a)
 readDocumentByName collection n =
   splitFindDocument collection (findByName n) >>=
-  extractFilename >>=
+  return . (snd <$>) >>=
   readDocument' collection
 
 -- | Returns a document's id by name (for example, "hello" will return 23 when key "00023-hello" exists).
 -- Does not read the document!
-documentIdFromName :: FilePath -> String -> IO (Maybe Int)
+documentIdFromName :: (MonadIO i) => FilePath -> String -> i (Maybe Int)
 documentIdFromName collection n =
   splitFindDocument collection (findByName n) >>=
-  extractIdAndName >>=
-  return . (fst <$>)
+  return . (fst <$> fst <$>)
 
 -- | Returns a document's name by id (for example, 23 will return "hello" when key "00023-hello" exists).
 -- Does not read the document!
-documentNameFromId :: FilePath -> Int -> IO (Maybe String)
+documentNameFromId :: (MonadIO i) => FilePath -> Int -> i (Maybe String)
 documentNameFromId collection i =
   splitFindDocument collection (findById i) >>=
-  extractIdAndName >>=
-  return . (drop 1 . snd <$>)
+  return . (drop 1 . snd <$> fst <$>)
