@@ -1,7 +1,7 @@
 name:            gitson
-version:         0.4.0
+version:         0.4.1
 synopsis:        A document store library for Git + JSON.
-description:     A simple document store library for Git + JSON, based on Aeson. Uses command line git, at least for now. No fancy indexes and stuff, but it does what I need right now. Transactions use flock, so it's safe even across completely separate programs!
+description:     A simple document store library for Git + JSON, based on Aeson. Uses command line git. Transactions use flock, so it's safe even across completely separate programs!
 category:        Database, JSON, Git
 homepage:        https://github.com/myfreeweb/gitson
 author:          Greg V
@@ -14,8 +14,7 @@ cabal-version:   >= 1.18
 extra-source-files:
     README.md
 tested-with:
-    GHC == 7.6.3
-  , GHC == 7.8.2
+    GHC == 7.8.2
 
 source-repository head
     type: git
@@ -38,7 +37,6 @@ library
     exposed-modules:
         Gitson
         Gitson.Util
-        -- HASKELETON: New.Module
     other-modules:
         Gitson.Json
     ghc-prof-options: -auto-all -prof
@@ -72,7 +70,6 @@ test-suite tests
     main-is: Spec.hs
     other-modules:
         GitsonSpec
-        -- HASKELETON: New.ModuleSpec
     type: exitcode-stdio-1.0
 
 benchmark benchmarks
