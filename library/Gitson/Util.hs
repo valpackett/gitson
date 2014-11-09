@@ -4,6 +4,7 @@
 module Gitson.Util (module Gitson.Util) where
 
 import           Control.Monad (void, filterM)
+import           Control.Monad.IO.Class
 import           Control.Applicative
 import           Data.List (isSuffixOf, isPrefixOf)
 import           Data.Maybe
@@ -39,12 +40,12 @@ filterDirs = (filterM doesDirectoryExist) . filter (not . isPrefixOf ".")
 
 -- | Returns an IO action that switches the current directory to a given path,
 -- executes the given IO action and switches the current directory back.
-insideDirectory :: FilePath -> IO a -> IO a
+insideDirectory :: (MonadIO i) => FilePath -> i a -> i a
 insideDirectory path action = do
-  prevPath <- getCurrentDirectory
-  setCurrentDirectory path
+  prevPath <- liftIO $ getCurrentDirectory
+  liftIO $ setCurrentDirectory path
   result <- action
-  setCurrentDirectory prevPath
+  liftIO $ setCurrentDirectory prevPath
   return result
 
 -- | Returns the message of the last git commit in the repo where the current directory is located.
@@ -52,8 +53,8 @@ lastCommitText :: IO String
 lastCommitText = readProcess "git" ["log", "--max-count=1", "--pretty=format:%s"] []
 
 -- | Runs a shell command with stdin, stdout and stderr set to /dev/null.
-shell :: String -> [String] -> IO ()
-shell cmd args = void $ do
+shell :: (MonadIO i) => String -> [String] -> i ()
+shell cmd args = liftIO $ void $ do
   dnull <- openFile "/dev/null" ReadWriteMode
   (_, _, _, pid) <- createProcess (proc cmd args){std_in = UseHandle dnull, std_out = UseHandle dnull, std_err = UseHandle dnull}
   waitForProcess pid

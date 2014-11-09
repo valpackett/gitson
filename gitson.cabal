@@ -25,6 +25,7 @@ library
     build-depends:
         base >= 4.0.0.0 && < 5
       , transformers
+      , monad-control
       , process
       , bytestring
       , directory

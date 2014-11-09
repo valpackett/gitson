@@ -1,4 +1,4 @@
-{-# LANGUAGE Safe #-}
+{-# LANGUAGE Safe, FlexibleContexts #-}
 
 -- | Gitson is a simple document store library for Git + JSON.
 module Gitson (
@@ -23,6 +23,8 @@ import           Control.Applicative ((<$>))
 import           Control.Exception (try, IOException)
 import           Control.Error.Util (hush)
 import           Control.Monad.Trans.Writer
+import           Control.Monad.Trans.Control
+import           Control.Monad.IO.Class
 import           Data.Maybe (fromMaybe, catMaybes)
 import           Data.List (find, isSuffixOf)
 import           Text.Printf (printf)
@@ -31,7 +33,7 @@ import           Gitson.Util
 import           Gitson.Json
 
 -- | A transaction monad.
-type TransactionWriter = WriterT [IO ()] IO ()
+type TransactionWriter = WriterT [IO ()]
 
 type IdAndName = (Int, String)
 type FileName = String
@@ -44,14 +46,14 @@ createRepo path = do
   insideDirectory path $ shell "git" ["init"]
 
 -- | Executes a blocking transaction on a repository, committing the results to git.
-transaction :: FilePath -> TransactionWriter -> IO ()
-transaction repoPath action = do
+transaction :: (MonadIO i, MonadBaseControl IO i) => FilePath -> TransactionWriter i () -> i ()
+transaction repoPath action =
   insideDirectory repoPath $ do
-    writeFile lockPath ""
+    liftIO $ writeFile lockPath ""
     withLock lockPath Exclusive Block $ do
       writeActions <- execWriterT action
       shell "git" ["stash"] -- it's totally ok to do this without changes
-      sequence_ writeActions
+      liftIO $ sequence_ writeActions
       shell "git" ["add", "--all"]
       shell "git" ["commit", "-m", "Gitson transaction"]
       shell "git" ["stash", "pop"]
@@ -65,14 +67,14 @@ writeDocument :: ToJSON a => FilePath -> FileName -> a -> IO ()
 writeDocument collection key content = BL.writeFile (documentPath collection key) (encode content)
 
 -- | Adds a write action to a transaction.
-saveDocument :: ToJSON a => FilePath -> FileName -> a -> TransactionWriter
+saveDocument :: (MonadIO i) => ToJSON a => FilePath -> FileName -> a -> TransactionWriter i ()
 saveDocument collection key content = do
   tell [createDirectoryIfMissing True collection,
         writeDocument collection key content]
 
 -- | Adds a write action to a transaction.
 -- The key will start with a numeric id, incremented from the last id in the collection.
-saveNextDocument :: ToJSON a => FilePath -> FileName -> a -> TransactionWriter
+saveNextDocument :: (MonadIO i, ToJSON a) => FilePath -> FileName -> a -> TransactionWriter i ()
 saveNextDocument collection key content = do
   tell [createDirectoryIfMissing True collection,
         listDocumentKeys collection >>=
