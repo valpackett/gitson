@@ -44,6 +44,26 @@ spec = before setup $ after cleanup $ do
           second <- readFile "things/000002-world.json"
           second `shouldBe` "{\n  \"val\": 2\n}"
 
+    describe "saveDocumentById" $ do
+      it "updates an entry by specified id" $ do
+        createDirectoryIfMissing True "tmp/repo/things"
+        _ <- liftIO $ writeFile "tmp/repo/things/000004-second-thing.json" "{\"val\":1}"
+        transaction "tmp/repo" $ do
+          saveDocumentById "things" 4 Thing {val = 2}
+        insideDirectory "tmp/repo" $ do
+          second <- readFile "things/000004-second-thing.json"
+          second `shouldBe` "{\n  \"val\": 2\n}"
+
+    describe "saveDocumentByName" $ do
+      it "updates an entry by specified name" $ do
+        createDirectoryIfMissing True "tmp/repo/things"
+        _ <- liftIO $ writeFile "tmp/repo/things/000004-second-thing.json" "{\"val\":1}"
+        transaction "tmp/repo" $ do
+          saveDocumentByName "things" "second-thing" Thing {val = 2}
+        insideDirectory "tmp/repo" $ do
+          second <- readFile "things/000004-second-thing.json"
+          second `shouldBe` "{\n  \"val\": 2\n}"
+
   describe "readDocument" $ do
     it "returns Just the document when reading an document by key" $ do
       createDirectoryIfMissing True "tmp/repo/things"

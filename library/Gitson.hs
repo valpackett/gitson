@@ -7,6 +7,8 @@ module Gitson (
 , transaction
 , saveDocument
 , saveNextDocument
+, saveDocumentById
+, saveDocumentByName
 , listCollections
 , listDocumentKeys
 , listEntries
@@ -38,6 +40,19 @@ type TransactionWriter = WriterT [IO ()]
 type IdAndName = (Int, String)
 type FileName = String
 type Finder = ([(IdAndName, FileName)] -> Maybe (IdAndName, FileName))
+
+splitFindDocument :: (MonadIO i) => FilePath -> Finder -> i (Maybe (IdAndName, FileName))
+splitFindDocument collection finder = listDocumentKeys collection >>=
+  return . finder . catMaybes . map (\x -> intoFunctor (maybeReadIntString x) x)
+
+documentFullKey :: (MonadIO i) => FilePath -> Finder -> i (Maybe FileName)
+documentFullKey collection finder = splitFindDocument collection finder >>= return . (snd <$>)
+
+findById :: Int -> Finder
+findById i = find $ (== i) . fst . fst
+
+findByName :: String -> Finder
+findByName n = find $ (isSuffixOf n) . snd . fst
 
 -- | Creates a git repository under a given path.
 createRepo :: FilePath -> IO ()
@@ -81,6 +96,24 @@ saveNextDocument collection key content = do
         return . nextKeyId >>=
         \nextId -> writeDocument collection (combineKey (nextId, key)) content]
 
+-- | Adds a write action to a transaction.
+-- Will update the document with the given numeric id.
+saveDocumentById :: (MonadIO i, ToJSON a) => FilePath -> Int -> a -> TransactionWriter i ()
+saveDocumentById collection i content = do
+  tell [documentFullKey collection (findById i) >>=
+        \k -> case k of
+          Just key -> writeDocument collection key content
+          Nothing -> return ()]
+
+-- | Adds a write action to a transaction.
+-- Will update the document with the given numeric id.
+saveDocumentByName :: (MonadIO i, ToJSON a) => FilePath -> String -> a -> TransactionWriter i ()
+saveDocumentByName collection n content = do
+  tell [documentFullKey collection (findByName n) >>=
+        \k -> case k of
+          Just key -> writeDocument collection key content
+          Nothing -> return ()]
+
 -- | Lists collections in the current repository.
 listCollections :: (MonadIO i) => i [FilePath]
 listCollections = liftIO $ do
@@ -111,28 +144,16 @@ readDocument' collection key = liftIO $ case key of
   Just key -> readDocument collection key
   Nothing -> return Nothing
 
-splitFindDocument :: (MonadIO i) => FilePath -> Finder -> i (Maybe (IdAndName, FileName))
-splitFindDocument collection finder = listDocumentKeys collection >>=
-  return . finder . catMaybes . map (\x -> intoFunctor (maybeReadIntString x) x)
-
-findById :: Int -> Finder
-findById i = find $ (== i) . fst . fst
-
-findByName :: String -> Finder
-findByName n = find $ (isSuffixOf n) . snd . fst
-
 -- | Reads a document from a collection by numeric id (for example, key "00001-hello" has id 1).
 readDocumentById :: (MonadIO i, FromJSON a) => FilePath -> Int -> i (Maybe a)
 readDocumentById collection i =
-  splitFindDocument collection (findById i) >>=
-  return . (snd <$>) >>=
+  documentFullKey collection (findById i) >>=
   readDocument' collection
 
 -- | Reads a document from a collection by name (for example, key "00001-hello" has name "hello").
 readDocumentByName :: (MonadIO i, FromJSON a) => FilePath -> String -> i (Maybe a)
 readDocumentByName collection n =
-  splitFindDocument collection (findByName n) >>=
-  return . (snd <$>) >>=
+  documentFullKey collection (findByName n) >>=
   readDocument' collection
 
 -- | Returns a document's id by name (for example, "hello" will return 23 when key "00023-hello" exists).
