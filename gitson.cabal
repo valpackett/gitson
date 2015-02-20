@@ -7,7 +7,7 @@ homepage:        https://github.com/myfreeweb/gitson
 author:          Greg V
 copyright:       2014-2015 Greg V <greg@unrelenting.technology>
 maintainer:      greg@unrelenting.technology
-license:         Apache-2.0
+license:         OtherLicense
 license-file:    COPYING
 build-type:      Simple
 cabal-version:   >= 1.18
