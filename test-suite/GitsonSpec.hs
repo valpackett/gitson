@@ -12,6 +12,8 @@ import           Control.Monad (void)
 import           Gitson
 import           Gitson.Util (insideDirectory, lastCommitText)
 
+{-# ANN module ("HLint: ignore Redundant do"::String) #-}
+
 data Thing = Thing { val :: Int } deriving (Eq, Show, Ord)
 $(deriveJSON defaultOptions ''Thing)
 
@@ -23,8 +25,8 @@ spec = before setup $ after cleanup $ do
         transaction "tmp/repo" $ do
           saveDocument "things" "first-thing" Thing {val = 1}
           saveDocument "things" "second-thing" Thing {val = 2}
-          liftIO $ (readFile "things/first-thing.json") `shouldThrow` anyIOException
-          liftIO $ (readFile "things/second-thing.json") `shouldThrow` anyIOException
+          liftIO $ readFile "things/first-thing.json" `shouldThrow` anyIOException
+          liftIO $ readFile "things/second-thing.json" `shouldThrow` anyIOException
         insideDirectory "tmp/repo" $ do
           first <- readFile "things/first-thing.json"
           first `shouldBe` "{\n  \"val\": 1\n}"

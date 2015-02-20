@@ -27,7 +27,8 @@ import           Control.Error.Util (hush)
 import           Control.Monad.Trans.Writer
 import           Control.Monad.Trans.Control
 import           Control.Monad.IO.Class
-import           Data.Maybe (fromMaybe, catMaybes)
+import           Control.Monad (liftM)
+import           Data.Maybe (fromMaybe, mapMaybe)
 import           Data.List (find, isSuffixOf)
 import           Text.Printf (printf)
 import qualified Data.ByteString.Lazy as BL
@@ -39,11 +40,11 @@ type TransactionWriter = WriterT [IO ()]
 
 type IdAndName = (Int, String)
 type FileName = String
-type Finder = ([(IdAndName, FileName)] -> Maybe (IdAndName, FileName))
+type Finder = [(IdAndName, FileName)] -> Maybe (IdAndName, FileName)
 
 splitFindDocument :: (MonadIO i) => FilePath -> Finder -> i (Maybe (IdAndName, FileName))
 splitFindDocument collection finder = listDocumentKeys collection >>=
-  return . finder . catMaybes . map (\x -> intoFunctor (maybeReadIntString x) x)
+  return . finder . mapMaybe (\x -> intoFunctor (maybeReadIntString x) x)
 
 documentFullKey :: (MonadIO i) => FilePath -> Finder -> i (Maybe FileName)
 documentFullKey collection finder = splitFindDocument collection finder >>= return . (snd <$>)
@@ -52,7 +53,7 @@ findById :: Int -> Finder
 findById i = find $ (== i) . fst . fst
 
 findByName :: String -> Finder
-findByName n = find $ (isSuffixOf n) . snd . fst
+findByName n = find $ isSuffixOf n . snd . fst
 
 -- | Creates a git repository under a given path.
 createRepo :: FilePath -> IO ()
@@ -76,21 +77,21 @@ transaction repoPath action =
 combineKey :: IdAndName -> FileName
 combineKey (n, s) = zeroPad n ++ "-" ++ s
   where zeroPad :: Int -> String
-        zeroPad x = printf "%06d" x
+        zeroPad = printf "%06d"
 
 writeDocument :: ToJSON a => FilePath -> FileName -> a -> IO ()
 writeDocument collection key content = BL.writeFile (documentPath collection key) (encode content)
 
 -- | Adds a write action to a transaction.
 saveDocument :: (MonadIO i, ToJSON a) => FilePath -> FileName -> a -> TransactionWriter i ()
-saveDocument collection key content = do
+saveDocument collection key content =
   tell [createDirectoryIfMissing True collection,
         writeDocument collection key content]
 
 -- | Adds a write action to a transaction.
 -- The key will start with a numeric id, incremented from the last id in the collection.
 saveNextDocument :: (MonadIO i, ToJSON a) => FilePath -> FileName -> a -> TransactionWriter i ()
-saveNextDocument collection key content = do
+saveNextDocument collection key content =
   tell [createDirectoryIfMissing True collection,
         listDocumentKeys collection >>=
         return . nextKeyId >>=
@@ -99,7 +100,7 @@ saveNextDocument collection key content = do
 -- | Adds a write action to a transaction.
 -- Will update the document with the given numeric id.
 saveDocumentById :: (MonadIO i, ToJSON a) => FilePath -> Int -> a -> TransactionWriter i ()
-saveDocumentById collection i content = do
+saveDocumentById collection i content =
   tell [documentFullKey collection (findById i) >>=
         \k -> case k of
           Just key -> writeDocument collection key content
@@ -108,7 +109,7 @@ saveDocumentById collection i content = do
 -- | Adds a write action to a transaction.
 -- Will update the document with the given numeric id.
 saveDocumentByName :: (MonadIO i, ToJSON a) => FilePath -> String -> a -> TransactionWriter i ()
-saveDocumentByName collection n content = do
+saveDocumentByName collection n content =
   tell [documentFullKey collection (findByName n) >>=
         \k -> case k of
           Just key -> writeDocument collection key content
