@@ -160,5 +160,5 @@ spec = before setup $ after cleanup $ do
 setup :: IO ()
 setup = createRepo "tmp/repo"
 
-cleanup :: IO ()
-cleanup = void (try (removeDirectoryRecursive "tmp/repo") :: IO (Either IOException ()))
+cleanup :: ActionWith ()
+cleanup () = void (try (removeDirectoryRecursive "tmp/repo") :: IO (Either IOException ()))

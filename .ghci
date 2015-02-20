@@ -1,0 +1,5 @@
+:set -itest-suite/ -ibenchmark/ -package criterion -package random -package hspec -package Glob -package doctest
+:def dtest  \_ -> return $ ":load test-suite/DocTest.hs\n:reload\n:main"
+:def test   \_ -> return $ ":load test-suite/Spec.hs\n:reload\n:main --color\n:dtest"
+:def retest \_ -> return $ ":load test-suite/Spec.hs\n:reload\n:main --color --rerun"
+:def bench  \_ -> return $ ":load benchmark/Bench.hs\n:reload\n:main"

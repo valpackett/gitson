@@ -14,7 +14,7 @@ clean:
 	if test -d .hpc; then rm -r .hpc; fi
 
 configure:
-	cabal configure --enable-benchmarks --enable-tests --enable-library-coverage -v2
+	cabal configure --enable-benchmarks --enable-tests --enable-coverage -v2
 
 haddock:
 	cabal haddock --hyperlink-source
@@ -29,7 +29,7 @@ install:
 	cabal install --enable-benchmarks --enable-tests --only-dependencies --reorder-goals
 
 repl:
-	cabal repl lib:gitson
+	cabal repl lib:gitson --ghc-options="-fno-hpc"
 
 test:
 	cabal test --show-details=always --test-option=--color
