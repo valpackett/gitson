@@ -36,13 +36,13 @@ filterFilenamesAsKeys = map dropExtension . filter (isSuffixOf ".json")
 
 -- | Filters a list of file paths, leaving only paths to existing non-hidden directories.
 filterDirs :: [FilePath] -> IO [FilePath]
-filterDirs = (filterM doesDirectoryExist) . filter (not . isPrefixOf ".")
+filterDirs = filterM doesDirectoryExist . filter (not . isPrefixOf ".")
 
 -- | Returns an IO action that switches the current directory to a given path,
 -- executes the given IO action and switches the current directory back.
 insideDirectory :: (MonadIO i) => FilePath -> i a -> i a
 insideDirectory path action = do
-  prevPath <- liftIO $ getCurrentDirectory
+  prevPath <- liftIO getCurrentDirectory
   liftIO $ setCurrentDirectory path
   result <- action
   liftIO $ setCurrentDirectory prevPath
@@ -93,7 +93,7 @@ maybeReadIntString x = listToMaybe (reads x :: [(Int, String)])
 -- >>> nextKeyId ["1-hell0-w0rld-123456.json", "002-my-second-post.json"]
 -- 3
 nextKeyId :: [String] -> Int
-nextKeyId = (+1) . maxOrZero . catMaybes . map maybeReadInt
+nextKeyId = (+1) . maxOrZero . mapMaybe maybeReadInt
   where maybeReadInt x = fst <$> maybeReadIntString x
         maxOrZero [] = 0
         maxOrZero xs = maximum xs
